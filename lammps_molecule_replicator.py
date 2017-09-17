@@ -11,13 +11,14 @@ import random
 import math
 import sys
 
+
 # Open the file for writing: start with the read_data information for a single molecule of interest contained in a file named 'data.txt'
 f = open('data.txt', 'r')
 contents = f.readlines()
 f.close()
 
 # Set the number of molecules (must be an integer cubed) 
-num_molecules = 27
+num_molecules = 125
 
 # Save the original header
 num_atoms_original = int(contents[2].split()[0])
@@ -48,31 +49,61 @@ center_original = np.mean(coordinates_original_matrix, axis = 0)
 ranges_original = np.max(coordinates_original_matrix, axis = 0) - np.min(coordinates_original_matrix, axis = 0)
 spacing = math.ceil(np.sqrt(2.0*(max(ranges_original)**2)))
 
+# Define a rotation matrix
+def rotation_matrix(phi, theta, psi):
+	rotation_matrix = np.zeros([3,3])
+	rotation_matrix[0][0] = math.cos(theta)*math.cos(psi)
+	rotation_matrix[0][1] = -1.0*math.cos(phi)*math.sin(psi) + math.sin(theta)*math.cos(psi)*math.sin(phi)
+	rotation_matrix[0][2] = math.sin(phi)*math.sin(psi) + math.sin(theta)*math.cos(psi)*math.cos(phi)
+	rotation_matrix[1][0] = math.cos(theta)*math.sin(psi)
+	rotation_matrix[1][1] = math.cos(phi)*math.cos(psi) + math.sin(theta)*math.sin(psi)*math.sin(phi)
+	rotation_matrix[1][2] = -1.0*math.sin(phi)*math.cos(psi) + math.sin(theta)*math.sin(psi)*math.cos(phi)
+	rotation_matrix[2][0] = -1.0*math.sin(theta)
+	rotation_matrix[2][1] = math.sin(phi)*math.cos(theta)
+	rotation_matrix[2][2] = math.cos(phi)*math.cos(theta)
+
+	return rotation_matrix
+
 # Add new molecules to the file
 atom_counter = 0
 for xj in range(int(math.pow(num_molecules, 1/3))):
 	for yj in range(int(math.pow(num_molecules, 1/3))):
 		for zj in range(int(math.pow(num_molecules, 1/3))):
-			for i in range(num_atoms_original):
+			
+			# Define random angles
+			phi = np.random.uniform(0.0, 2.0*math.pi)
+			theta = np.random.uniform(0.0, 2.0*math.pi)
+			psi = np.random.uniform(0.0, 2.0*math.pi)
+
+			for i in range(num_atoms_original):				
 
 				atom_counter += 1
 
 				if(atom_counter <= num_atoms_original):
 					coordinates_contents = contents[atom_index + 2 + i].split()
+
 					coordinates_contents[4] = str(float(coordinates_contents[4]) + spacing*(float(xj) + 1.0))
 					coordinates_contents[5] = str(float(coordinates_contents[5]) + spacing*(float(yj) + 1.0))
 					coordinates_contents[6] = str(float(coordinates_contents[6]) + spacing*(float(zj) + 1.0))
+					
 					coordinates_contents = '     ' + '    '.join(coordinates_contents) + '\n'
 					contents[atom_index + 2 + i] = coordinates_contents
 
 				else:
-					coordinates_contents = contents[atom_index + 2 + i].split()
 					
+					coordinates_contents = contents[atom_index + 2 + i].split()
+
+					new_test = coordinates_original_matrix[i]
+					new_test = new_test - center_original
+					print(i, rotation_matrix(phi, theta, psi))
+					new_test = np.dot(rotation_matrix(phi, theta, psi), new_test)
+					new_test = new_test + center_original
+
 					coordinates_contents[0] = str(atom_counter)
 			
-					coordinates_contents[4] = str(coordinates_original_matrix[i][0] + spacing*(float(xj) + 1.0))
-					coordinates_contents[5] = str(coordinates_original_matrix[i][1] + spacing*(float(yj) + 1.0))
-					coordinates_contents[6] = str(coordinates_original_matrix[i][2] + spacing*(float(zj) + 1.0))
+					coordinates_contents[4] = str(new_test[0] + spacing*(float(xj) + 1.0))
+					coordinates_contents[5] = str(new_test[1] + spacing*(float(yj) + 1.0))
+					coordinates_contents[6] = str(new_test[2] + spacing*(float(zj) + 1.0))
 
 					coordinates_contents = '     ' + '    '.join(coordinates_contents) + '\n'
 					contents.insert(atom_index + 1 + atom_counter, coordinates_contents)

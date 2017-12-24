@@ -1,0 +1,16 @@
+     # Unscaled non-bonded interactions used for fitting vdw parameters
+     pair_coeff           1          1          lj/cut/coul/long      0.018252             2.467643           
+     pair_coeff           1          2          lj/cut/coul/long      0.013643             2.457642           
+     pair_coeff           1          3          lj/cut/coul/long      0.032684             3.088367           
+     pair_coeff           1          4          lj/cut/coul/long      0.033132             3.092889           
+     pair_coeff           1          5          lj/cut/coul/long      0.031915             3.123188           
+     pair_coeff           2          2          lj/cut/coul/long      0.010204             2.447434           
+     pair_coeff           2          3          lj/cut/coul/long      0.023993             3.085134           
+     pair_coeff           2          4          lj/cut/coul/long      0.024321             3.089680           
+     pair_coeff           2          5          lj/cut/coul/long      0.023419             3.120132           
+     pair_coeff           3          3          lj/cut/coul/long      0.129282             3.386973           
+     pair_coeff           3          4          lj/cut/coul/long      0.131545             3.389828           
+     pair_coeff           3          5          lj/cut/coul/long      0.129833             3.409183           
+     pair_coeff           4          4          lj/cut/coul/long      0.133852             3.392671           
+     pair_coeff           4          5          lj/cut/coul/long      0.132132             3.411947           
+     pair_coeff           5          5          lj/cut/coul/long      0.130579             3.430693           

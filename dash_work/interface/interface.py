@@ -62,10 +62,30 @@ def indices_containing_substring(the_list, substring):
 
 def process_datafile(files):
 
+
+	# Read restart files
 	f1 = open(files['water_restart_file'], 'r')
 	contents1 = f1.readlines()
 	f1.close()
 
+	f2 = open(files['hexane_lammps_file'], 'r')
+	contents_hexane = f2.readlines()
+	f2.close()
+
+	# Extract the box coordinates from the hexane file
+	hexane_x_bounds = contents_hexane[indices_containing_substring(contents_hexane, "xlo")[0]].split()
+	hexane_xlo = float(hexane_x_bounds[0])
+	hexane_xhi = float(hexane_x_bounds[1])
+
+	hexane_y_bounds = contents_hexane[indices_containing_substring(contents_hexane, "ylo")[0]].split()
+	hexane_ylo = float(hexane_y_bounds[0])
+	hexane_yhi = float(hexane_y_bounds[1])
+
+	hexane_z_bounds = contents_hexane[indices_containing_substring(contents_hexane, "zlo")[0]].split()
+	hexane_zlo = float(hexane_z_bounds[0])
+	hexane_zhi = float(hexane_z_bounds[1])
+
+	
 	# Calculate number of atoms
 	num_atoms_line = contents1[indices_containing_substring(contents1, "numAtoms")[0]].split()
 	index = indices_containing_substring(contents1[indices_containing_substring(contents1, "numAtoms")[0]].split(), "numAtoms")[0]
@@ -122,6 +142,7 @@ def process_datafile(files):
 	y_boxlength = yhi - ylo
 	z_boxlength = zhi - zlo
 
+	
 	# List to hold positions
 	positions = []
 
@@ -141,9 +162,9 @@ def process_datafile(files):
 	# Move the box
 	for i in range(int(num_atoms/atoms_per_molecule)):
 		for j in range(atoms_per_molecule):
-			positions[i,j,0] = str(float(positions[i,j,0]) + 35.223034)
-			positions[i,j,1] = str(float(positions[i,j,1]) + 35.223034)
-			positions[i,j,2] = str(float(positions[i,j,2]) - 20.0)
+			positions[i,j,0] = str(float(positions[i,j,0]) + hexane_xlo - xlo)
+			positions[i,j,1] = str(float(positions[i,j,1]) + hexane_ylo - ylo)
+			positions[i,j,2] = str(float(positions[i,j,2]) - (zhi - hexane_zlo + 7))
 
 	# Unwrap molecules
 	for i in range(int(num_atoms/atoms_per_molecule)):

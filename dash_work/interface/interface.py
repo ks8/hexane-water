@@ -85,6 +85,35 @@ def process_datafile(files):
 	hexane_zlo = float(hexane_z_bounds[0])
 	hexane_zhi = float(hexane_z_bounds[1])
 
+	# Save the  header of the hexane file
+	num_atoms_hexane = contents_hexane[2].split()
+	num_bonds_hexane = contents_hexane[3].split()
+	num_angles_hexane = contents_hexane[4].split()
+	num_dihedrals_hexane = contents_hexane[5].split()
+
+	num_atomtype_hexane = contents_hexane[7].split()
+	num_bondtype_hexane = contents_hexane[8].split()
+	num_angletype_hexane = contents_hexane[9].split()
+	num_dihedraltype_hexane = contents_hexane[10].split()
+
+	# Save the atomic coordinates of the original molecule 
+	coordinates_hexane = np.zeros([int(num_atoms_hexane[0]), 3])
+	atom_index_hexane = contents_hexane.index("Atoms\n")
+	for i in range(int(num_atoms_hexane[0])):
+		coordinates_contents = contents_hexane[atom_index_hexane + 2 + i].split()
+		coordinates_hexane[i][0] = float(coordinates_contents[4])
+		coordinates_hexane[i][1] = float(coordinates_contents[5])
+		coordinates_hexane[i][2] = float(coordinates_contents[6])
+
+	# Calculate the center of geometry of the original molecule 
+	center_original_type1 = np.mean(coordinates_hexane, axis = 0)
+
+	# Atoms per molecule for hexane
+	atoms_per_molecule_hexane = 20
+
+	# Calculate the maximum dimensional range of the molecule (prevent overlapping using appropriate spacing) 
+	ranges_hexane = max(np.max(coordinates_hexane[0:atoms_per_molecule_hexane], axis = 0) - np.min(coordinates_hexane[0:atoms_per_molecule_hexane], axis = 0))
+	
 	
 	# Calculate number of atoms
 	num_atoms_line = contents1[indices_containing_substring(contents1, "numAtoms")[0]].split()
@@ -164,7 +193,7 @@ def process_datafile(files):
 		for j in range(atoms_per_molecule):
 			positions[i,j,0] = str(float(positions[i,j,0]) + hexane_xlo - xlo)
 			positions[i,j,1] = str(float(positions[i,j,1]) + hexane_ylo - ylo)
-			positions[i,j,2] = str(float(positions[i,j,2]) - (zhi - hexane_zlo + 7))
+			positions[i,j,2] = str(float(positions[i,j,2]) - (zhi - hexane_zlo + ranges_hexane))
 
 	# Unwrap molecules
 	for i in range(int(num_atoms/atoms_per_molecule)):
@@ -190,8 +219,6 @@ def process_datafile(files):
 				string_contents[2] = str(float(string_contents[2]) - np.sign(z_distance)*z_boxlength)
 
 			positions[i, j, :] = string_contents
-
-
 
 
 

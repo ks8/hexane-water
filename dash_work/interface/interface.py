@@ -345,10 +345,70 @@ def process_datafile(files):
 
 
 
+	# Discover the bounds of the system in order to construct a tight box 
 
 
-	loVector = Vector(8.0, 8.0, -50.0)
-	hiVector = Vector(63.0, 63.0, 62.0)
+	# Set an initial guess
+	bounds_xlo = hexane_xlo
+	bounds_xhi = hexane_xhi
+	bounds_ylo = hexane_ylo
+	bounds_yhi = hexane_yhi
+	bounds_zlo = hexane_zlo
+	bounds_zhi = hexane_zhi
+
+
+	# Loop over the new unwrapped hexane coordinates
+	for i in range(int(num_atoms_hexane[0])):
+
+		x_pos = coordinates_hexane[i, 0]
+		y_pos = coordinates_hexane[i, 1]
+		z_pos = coordinates_hexane[i, 2]
+
+		if x_pos > bounds_xhi:
+			bounds_xhi = x_pos
+		if x_pos < bounds_xlo:
+			bounds_xlo = x_pos
+		
+		if y_pos > bounds_yhi:
+			bounds_yhi = y_pos
+		if y_pos < bounds_ylo:
+			bounds_ylo = y_pos
+
+		if z_pos > bounds_zhi:
+			bounds_zhi = z_pos
+		if z_pos < bounds_zlo:
+			bounds_zlo = z_pos	
+
+
+	# Loop over the new translated and unwrapped water coordinates
+	for i in range(3650):
+		for j in range(4):
+
+			x_pos = positions[i, j, 0]
+			y_pos = positions[i, j, 1]
+			z_pos = positions[i, j, 2]
+
+			if x_pos > bounds_xhi:
+				bounds_xhi = x_pos
+			if x_pos < bounds_xlo:
+				bounds_xlo = x_pos
+		
+			if y_pos > bounds_yhi:
+				bounds_yhi = y_pos
+			if y_pos < bounds_ylo:
+				bounds_ylo = y_pos
+
+			if z_pos > bounds_zhi:
+				bounds_zhi = z_pos
+			if z_pos < bounds_zlo:
+				bounds_zlo = z_pos
+
+	
+
+	loVector = Vector(bounds_xlo, bounds_ylo, bounds_zlo)
+	hiVector = Vector(bounds_xhi, bounds_yhi, bounds_zhi)
+
+
 	state.bounds = Bounds(state, lo = loVector, hi = hiVector)
 
 	

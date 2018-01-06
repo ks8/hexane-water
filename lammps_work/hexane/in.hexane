@@ -1,0 +1,34 @@
+# Simulation of pure hexane using pair_style lj/cut
+
+units		    real
+atom_style	    full
+
+pair_style	    lj/cut/coul/long 12.0
+kspace_style    ewald 1e-4
+special_bonds   lj/coul 0.0 0.0 0.5 
+pair_modify     mix geometric
+bond_style      harmonic
+angle_style     harmonic
+dihedral_style  opls
+
+
+read_data	    input_hexane_preequil.txt
+
+neighbor	    2.0 bin
+neigh_modify	delay 5
+
+run_style       verlet
+velocity	    all create 300.0 4928459 mom yes rot yes dist gaussian
+
+timestep	    1.0
+
+thermo_style    custom step temp etotal press vol density
+
+fix             1 all npt temp 300.0 300.0 100.0 iso 1.0 1.0 1000.0
+ 
+dump  	 	    coords all atom 100 dump.hexane.lammpstrj
+
+thermo		    100
+
+run		        10000
+write_data      output_hexane_preequil.txt

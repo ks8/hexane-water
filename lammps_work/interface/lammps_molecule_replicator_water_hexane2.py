@@ -1,4 +1,4 @@
-"Script to build a full read_data LAMMPS file of the hexane water interface from two sets of molecular data files, by Kirk Swanson"
+"Script to build a full read_data LAMMPS file of the hexane water interface from two sets of molecular data files for the datafileoriginal input to lammps_restart.py, by Kirk Swanson"
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -39,7 +39,7 @@ def convert_args(args):
 
 	options = {}
 	options['N1'] = args.number1
-	options['N2'] = args.number2 
+	options['N2'] = args.number2
 
 	# Print confirmation
 	print("**************************")
@@ -62,7 +62,7 @@ def process_datafile(files, options):
 	f1 = open(files['data1'], 'r')
 	contents1 = f1.readlines()
 	f1.close()
-	
+
 	f2 = open(files['data2'], 'r')
 	contents2 = f2.readlines()
 	f2.close()

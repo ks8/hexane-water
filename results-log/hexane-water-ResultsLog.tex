@@ -1,0 +1,216 @@
+% LaTEX source code
+% Last modified November 1st, 2005
+% Steve Miller
+% note that the percent sign comments out the rest of the line
+% first, we set a document class. often use 12pt characters, though
+% sometimes people do 11 or 10. you can do report or article, both similar
+%\documentclass[12pt,letterpaper]{article}
+\documentclass[12pt,reqno]{amsart}
+\linespread{1}
+\addtolength{\textwidth}{2cm} \addtolength{\hoffset}{-1cm}
+\addtolength{\marginparwidth}{-1cm} \addtolength{\textheight}{2cm}
+\addtolength{\voffset}{-1cm}
+% below are some packages that are needed for certain symbols, graphics, colors.
+% safest to just include these.
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{mathrsfs}
+\usepackage{latexsym}
+\usepackage[dvips]{graphics}
+\usepackage{epsfig}
+\usepackage{hyperref, amsmath, amsthm, amsfonts, amscd, flafter,epsf}
+\usepackage{amsmath,amsfonts,amsthm,amssymb,amscd}
+\input amssym.def
+\input amssym.tex
+\usepackage{color}
+\usepackage{enumerate}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{floatrow}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{capt-of}
+\usepackage{physics}
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{(#1)}}}
+
+    %=======================================================
+
+    %   THIS IS WHERE YOU PUT SHORTCUT DEFINITIONS
+
+    %========================================================
+
+% Note that we use a percent sign to comment out a line
+
+% below are shortcut commands
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% below are shortcuts for equation, eqnarray,
+
+% itemize and enumerate environments
+
+\newcommand\be{\begin{equation}}
+\newcommand\ee{\end{equation}}
+\newcommand\bea{\begin{eqnarray}}
+\newcommand\eea{\end{eqnarray}}
+\newcommand\bi{\begin{itemize}}
+\newcommand\ei{\end{itemize}}
+\newcommand\ben{\begin{enumerate}}
+\newcommand\een{\end{enumerate}}
+\newcommand{\ncr}[2]{\left({#1 \atop #2}\right)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Theorem / Lemmas et cetera
+
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{conj}[thm]{Conjecture}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{exa}[thm]{Example}
+\newtheorem{defi}[thm]{Definition}
+\newtheorem{exe}[thm]{Exercise}
+\newtheorem{rek}[thm]{Remark}
+\newtheorem{que}[thm]{Question}
+\newtheorem{prob}[thm]{Problem}
+\newtheorem{cla}[thm]{Claim}
+\newtheorem{defis}[thm]{Definitions}
+\newtheorem{res}[thm]{Result}
+\newtheorem{calc}[thm]{Calculation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% shortcuts to environments
+
+% this allows you to do textboldface: simply type \tbf{what you want in bold}
+
+\newcommand{\tbf}[1]{\textbf{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% shortcut to twocase and threecase definitions
+
+\newcommand{\twocase}[5]{#1 \begin{cases} #2 & \text{#3}\\ #4
+&\text{#5} \end{cases}   }
+\newcommand{\threecase}[7]{#1 \begin{cases} #2 &
+\text{#3}\\ #4 &\text{#5}\\ #6 &\text{#7} \end{cases}   }
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Blackboard Letters
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\C}{\ensuremath{\mathbb{C}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\W}{\mathbb{W}}
+\newcommand{\Qoft}{\mathbb{Q}(t)}  %use in linux
+\newcommand{\soln}{\noindent \textbf{Solution:}\ }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Finite Fields and Groups
+
+\newcommand{\Fp}{ \F_p }
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Fractions
+
+\newcommand{\foh}{\frac{1}{2}}  %onehalf
+\newcommand{\fot}{\frac{1}{3}}
+\newcommand{\fof}{\frac{1}{4}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Legendre Symbols
+
+\newcommand{\js}[1]{ { \underline{#1} \choose p} }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% matrix shortcuts
+
+\newcommand{\mattwo}[4]
+{\left(\begin{array}{cc}
+                        #1  & #2   \\
+                        #3 &  #4
+                          \end{array}\right) }
+\newcommand{\matthree}[9]
+{\left(\begin{array}{ccc}
+                        #1  & #2 & #3  \\
+                        #4 &  #5 & #6 \\
+                        #7 &  #8 & #9
+                          \end{array}\right) }
+\newcommand{\dettwo}[4]
+{\left|\begin{array}{cc}
+                        #1  & #2   \\
+                        #3 &  #4
+                          \end{array}\right| }
+\newcommand{\detthree}[9]
+{\left|\begin{array}{ccc}
+                        #1  & #2 & #3  \\
+                        #4 &  #5 & #6 \\
+                        #7 &  #8 & #9
+                          \end{array}\right| }
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% greek letter shortcuts
+
+\newcommand{\ga}{\alpha}                  %gives you a greek alpha
+\newcommand{\gb}{\beta}
+\newcommand{\gep}{\epsilon}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% general functions
+
+\newcommand{\notdiv}{\nmid}               % gives the not divide symbol
+\newcommand{\burl}[1]{\textcolor{blue}{\url{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% the following makes the numbering start with 1 in each section;
+
+% if you want the equations numbered 1 to N (without caring about
+
+% what section you are in, comment out the following line.
+
+\numberwithin{equation}{section}
+
+%\textwidth= 6in
+
+%\evensidemargin=37pt
+
+%\oddsidemargin=0pt
+
+\begin{document}
+
+
+
+\title{Machine Learning Glasses Results Log}
+\author{Kirk Swanson}
+\email{swansonk1@uchicago.edu}
+\address{Institute for Molecular Engineering, University of Chicago, 5640 S Ellis Ave, Chicago, IL 60637}
+%\keywords{path integral molecular dynamics, path integral monte carlo, metropolis algorithm}
+\date{\today}
+
+
+
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{1/8/2018}
+\begin{enumerate}
+\item Ran a simulation of the hexane-water interface using LAMMPS.  Set up for 1M time steps, but only got through 745,200 due to time limit of 24 hrs.  
+\end{enumerate}
+
+
+
+\end{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

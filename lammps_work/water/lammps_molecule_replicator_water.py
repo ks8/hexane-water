@@ -77,7 +77,7 @@ def process_datafile(files):
 
 	# Set the desired number of molecules for each type
 	density = 1.0/pow(spacing_type1, 3)
-	num_molecules_type1 = 5
+	num_molecules_type1 = 3650
 	volume = (1.0/density)*(num_molecules_type1)
 	spacing = int(math.ceil(pow(1.0/density, 1/3)))
 	L = int(math.ceil(int(math.ceil(pow(volume, 1/3)))/spacing))

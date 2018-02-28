@@ -331,17 +331,17 @@ def process_datafile(files):
 	ljcut.setParameter('eps',oxygenHandle, 'lmps_0', math.sqrt(epsilon*epsilon_lmps_0))
 	ljcut.setParameter('sig',oxygenHandle, 'lmps_0', (sigma + sigma_lmps_0)/2)
 
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_0', math.sqrt(epsilon*epsilon_lmps_1))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_0', (sigma + sigma_lmps_1)/2)
+	ljcut.setParameter('eps',oxygenHandle, 'lmps_1', math.sqrt(epsilon*epsilon_lmps_1))
+	ljcut.setParameter('sig',oxygenHandle, 'lmps_1', (sigma + sigma_lmps_1)/2)
 
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_0', math.sqrt(epsilon*epsilon_lmps_2))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_0', (sigma + sigma_lmps_2)/2)
+	ljcut.setParameter('eps',oxygenHandle, 'lmps_2', math.sqrt(epsilon*epsilon_lmps_2))
+	ljcut.setParameter('sig',oxygenHandle, 'lmps_2', (sigma + sigma_lmps_2)/2)
 
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_0', math.sqrt(epsilon*epsilon_lmps_3))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_0', (sigma + sigma_lmps_3)/2)
+	ljcut.setParameter('eps',oxygenHandle, 'lmps_3', math.sqrt(epsilon*epsilon_lmps_3))
+	ljcut.setParameter('sig',oxygenHandle, 'lmps_3', (sigma + sigma_lmps_3)/2)
 
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_0', math.sqrt(epsilon*epsilon_lmps_4))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_0', (sigma + sigma_lmps_4)/2)
+	ljcut.setParameter('eps',oxygenHandle, 'lmps_4', math.sqrt(epsilon*epsilon_lmps_4))
+	ljcut.setParameter('sig',oxygenHandle, 'lmps_4', (sigma + sigma_lmps_4)/2)
 
 
 

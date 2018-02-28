@@ -1,0 +1,30 @@
+# Simulation of pure water using pair_style tip4p MODIFIED to be flexible
+
+units		    real
+atom_style	    full
+
+pair_style	    lj/cut/tip4p/long 1 2 1 1 0.1546 8.5
+kspace_style    pppm/tip4p 1e-4
+bond_style      class2
+angle_style     harmonic
+
+read_data	    input_water_flexible_preequil.txt
+
+neighbor	    2.0 bin
+neigh_modify	delay 5
+
+run_style       verlet
+velocity	    all create 300.0 4928459 mom yes rot yes dist gaussian
+
+timestep	    1.0
+
+thermo_style    custom step temp etotal press vol density
+
+fix             1 all npt temp 300.0 300.0 100.0 iso 1.0 1.0 1000.0 
+
+dump  	 	    coords all atom 100 dump.water_tip4p_flexible.lammpstrj
+
+thermo		    100
+
+run		        10000
+write_data      output_water_flexible_preequil.txt

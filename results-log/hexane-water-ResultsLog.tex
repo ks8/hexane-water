@@ -338,12 +338,130 @@ where $K = \frac{1}{2}k_\theta$ and $\theta_0 = \theta_{eq} = 107.4$.
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.7]{dash_taffi-tip4pF_geometric_1bead_3950000}
-\caption{DASH simulation of the TAFFI - q-TIP4P/F interface.  Geometric mixing, 4,000,000 time steps, 1 bead.  This is the 0th timestep.}
+\caption{DASH simulation of the TAFFI - q-TIP4P/F interface.  Geometric mixing, 4,000,000 time steps, 1 bead.  This is the 3950000th timestep.}
 \end{figure}
-
-
   
 \end{enumerate}
+
+
+
+\subsection{3/5/2018}
+\begin{enumerate}
+\item Downloaded the trajectory file, dump.water\_flexible.lammpstrj, from the lammps\_work/water folder to check the performance of the TIP4P/F in LAMMPS.  The trajectory looks good.  Moreover, the density of th system reached a final value instantaneous value, at step 200,000, of 0.98752919.  The output file produced, output\_water\_flexible\_preequil.txt, taken after the final 200,000th step in the simulation, also looks reasonable:
+
+ \begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{lammps_tip4pF_200000}
+\caption{LAMMPS simulation of TIP4P/F water.  Geometric mixing, 200,000 timesteps, this is the final step.}
+\end{figure}
+
+\item Now, we will follow steps from before to simulate the TAFFI - q-TIP4P/F interface in LAMMPS.  
+\item First, move output\_water\_flexible\_preequil.txt into the interface folder.  Also move the file hexane\_restart\_modified.txt, which is  a preequilibrated slab of TAFFI hexane.  Now, we have two preequilibrated slabs - one with 500 TAFFI hexane molecules, and the other with 3650 TIP4P/F water molecules. 
+\item Second, move original molecular data file descriptions of single molecules of TAFFI hexane (i.e. data\_webb\_hexane\_modified.txt) and TIP4P/F water (data\_water\_flexible.txt) to the interface folder.  
+\item Run the file lammps\_molecule\_replicator\_tip4pwater\_webbhexane.py in order to produce a mixed system template that can be used as the -dataoriginal input file in the lammps\_restart.py program.  This is what this original file looks like:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{datafileoriginal_taffi_tip4pF}
+\caption{Image of datafileoriginal for TAFFI and TIP4P/F.}
+\end{figure}
+
+Run the lammps\_restart.py file using -data1=hexane\_restart\_modified.txt, -data2=output\_water\_flexible\_preequil.txt, and -dataoriginal=datafileoriginal\_taffi\_tip4pF.txt.  This produces the initial configuration for the hexane-water TAFFI-TIP4P/F system in LAMMPS:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{input_restart_taffi_tip4pF}
+\caption{Image of input file for TAFFI and TIP4P/F.}
+\end{figure}
+
+\item Finally, adjust the input\_restart\_taffi\_tip4pF file to have a Bond Coeffs style that is compatible with bond\_style class2.  
+
+\item HYPOTHESIS: All of my previous LAMMPS	 simulations of the interface were NPT, while in DASH, they were NVT.  Perhaps this is a difference?  I must do all simulations in both to check...
+
+\item I am now running a LAMMPS simulation of the hexane-water interface: 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT, 200,000 steps of time 1.0.  
+
+\item I am now also running an NVT LAMMPS simulation of the hexane-water interface: 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NVT, 200,000 steps of time 1.0.   
+
+\end{enumerate}
+
+\subsection{3/6/2018}
+\begin{enumerate}
+\item These are snapshots of the NPT simulations:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{lammps_taffi-tip4pF_0}
+\caption{LAMMPS simmulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT at T = 300 and P = 1, 200,000 timesteps of length 1.0 fs, NPT pre-equilibration of each slab at the same T and P.  Cutoff = 12.0, pppm/tip4p 1e-4, special bonds 0 0 0.  This is the 0th timestep.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{lammps_taffi-tip4pF_200000}
+\caption{LAMMPS simmulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT at T = 300 and P = 1, 200,000 timesteps of length 1.0 fs, NPT pre-equilibration of each slab at the same T and P.  Cutoff = 12.0, pppm/tip4p 1e-4, special bonds 0 0 0.  This is the 200,000th timestep.}
+\end{figure}
+
+\item So, the TAFFI-TIP4P/F interface in LAMMPS appears to be stable under NPT conditions.  The final density of this simulation was around 0.854.  
+
+\item These are snapshots of the NVT simulations: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{lammps_taffi-tip4pF_NVT_0}
+\caption{LAMMPS simmulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NVT at T = 300 and V = (4.722, 5.62, 6.26) x (113.25, 64.29, 64.71), 200,000 timesteps of length 1.0 fs, NPT pre-equilibration of each slab at the same T and P = 1.0.  Cutoff = 12.0, pppm/tip4p 1e-4, special bonds 0 0 0.  This is the 0th timestep.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{lammps_taffi-tip4pF_NVT_200000}
+\caption{LAMMPS simmulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NVT at T = 300 and V = (4.722, 5.62, 6.26) x (113.25, 64.29, 64.71), 200,000 timesteps of length 1.0 fs, NPT pre-equilibration of each slab at the same T and P = 1.0.  Cutoff = 12.0, pppm/tip4p 1e-4, special bonds 0 0 0.  This is the 200,000th timestep.}
+\end{figure}
+
+\item I have chosen, as usual, the box bounds to be the outermost atoms.  It appears as though this results in a box that is too large for NVT to produce an actual interface in the middle.  However, an interface does exist at the x-boundaries, which appears to be stable.  The final NVT density of the simulation was around 0.4855.    
+
+\item In order to check my new hypothesis, I want to run a classical simulation in DASH of the TAFFI-TIP4P/F interface under NPT conditions.  
+
+These are snapshots of the NPT result:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{dash_taffi-tip4pF_classical_NPT_0}
+\caption{DASH simmulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT Andersen/Berendsen at T = 300 and P = 1, 200,000 timesteps of length 1.0 fs, NPT pre-equilibration of each slab at 298.15K and same P.  Cutoff = 12.0, Ewald summation.  This is the 0th timestep.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{dash_taffi-tip4pF_classical_NPT_200000}
+\caption{DASH simmulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT Andersen/Berendsen at T = 300 and P = 1, 200,000 timesteps of length 1.0 fs, NPT pre-equilibration of each slab at 298.15K and same P.  Cutoff = 12.0, Ewald summation.  This is the 200000th timestep.}
+\end{figure}
+
+\item There is a significant difference in the LAMMPS and DASH simulations, suggesting that something is amiss in the DASH program.  
+
+\item I will now check over the interface\_NPT.py script to see if there are any possible sources of error.  We should check: relationship of bulk hexane and water to temperature in DASH, and compared to LAMMPS, as well as specifications of both models, i.e. charge and other parameters.  
+
+\item Went through the interface\_NPT.py file in detail.  Did not find any errors.
+
+\item Now, I am going to run the interface\_NPT.py file with pure water, removing the hexane component, and check the resulting density at various temperatures.  I will then do the same with hexane, removing the water.  Unless I've found the error at this point, I will then do the same calculations in LAMMPS and compare.  
+
+\item It looks like there is an issue with the water.  So, we will start tomorrow with an exploration of what is going on with the pure water restart.  The goal will be to create a water restart within the interface framework that does not have any issues.  
+
+
+
+
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \end{document}
 

@@ -1,0 +1,63 @@
+# Simulation of mixed TAFFI hexane and TIP4P/F water using pair_style tip4p and standard combining rules for hexane/water interactions (i.e. arithmetic rules) for webb hexane
+
+units		    real
+atom_style	    full
+
+pair_style      lj/cut/tip4p/long 6 7 6 7 0.1546 12.0
+kspace_style    pppm/tip4p 1.0e-4
+special_bonds   lj/coul 0.0 0.0 0.0
+pair_modify     mix arithmetic
+bond_style      class2
+angle_style     harmonic
+dihedral_style  opls
+
+read_data	    input_restart_taffi_tip4pF.txt
+
+pair_coeff           1          1               0.018252             2.467643            
+pair_coeff           1          2               0.013643             2.457642            
+pair_coeff           1          3               0.032684             3.088367            
+pair_coeff           1          4               0.033132             3.092889            
+pair_coeff           1          5               0.031915             3.123188            
+pair_coeff           2          2               0.010204             2.447434            
+pair_coeff           2          3               0.023993             3.085134            
+pair_coeff           2          4               0.024321             3.089680            
+pair_coeff           2          5               0.023419             3.120132            
+pair_coeff           3          3               0.129282             3.386973            
+pair_coeff           3          4               0.131545             3.389828            
+pair_coeff           3          5               0.129833             3.409183            
+pair_coeff           4          4               0.133852             3.392671            
+pair_coeff           4          5               0.132132             3.411947            
+pair_coeff           5          5               0.130579             3.430693
+pair_coeff           6          6               0.1852               3.1589 
+pair_coeff           7          7               0.0                  0.0
+pair_coeff           1          6               0.058140             2.813271
+pair_coeff           1          7               0.000000             0.000000
+pair_coeff           2          6               0.043471             2.803167
+pair_coeff           2          7               0.000000             0.000000
+pair_coeff           3          6               0.154735             3.272936
+pair_coeff           3          7               0.000000             0.000000
+pair_coeff           4          6               0.157446             3.275785
+pair_coeff           4          7               0.000000             0.000000
+pair_coeff           5          6               0.155509             3.294796
+pair_coeff           5          7               0.000000             0.000000
+pair_coeff           6          7               0.000000             0.000000
+
+
+neighbor	    2.0 bin
+neigh_modify	delay 5
+
+run_style       verlet
+velocity	    all create 300.0 4928459 mom yes rot yes dist gaussian
+
+timestep	    1.0
+
+thermo_style    custom step temp etotal press vol density
+
+fix             1 all npt temp 300.0 300.0 100.0 iso 1.0 1.0 1000.0
+
+dump  	 	    coords all atom 1000 dump.taffi_tip4pF.lammpstrj
+
+thermo		    100
+
+run		        200000
+

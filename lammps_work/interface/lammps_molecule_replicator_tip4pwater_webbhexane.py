@@ -182,7 +182,7 @@ def process_datafile(files, options):
 	out.write('\n')
 
 	# Pair Coeffs
-	# paircoeffs_index_type1 = contents1.index("Pair Coeffs\n")
+	paircoeffs_index_type1 = contents1.index("Pair Coeffs\n")
 	paircoeffs_index_type2 = contents2.index("Pair Coeffs\n")
 	out.write('Pair Coeffs\n')
 	out.write('\n')

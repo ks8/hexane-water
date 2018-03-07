@@ -444,9 +444,15 @@ These are snapshots of the NPT result:
 
 \item It looks like there is an issue with the water.  So, we will start tomorrow with an exploration of what is going on with the pure water restart.  The goal will be to create a water restart within the interface framework that does not have any issues.  
 
+\end{enumerate}
 
-
-
+\subsection{3/7/2018}
+\begin{enumerate}
+\item Looking into pure water simulations in DASH.  
+\item First, starting in dash\_work/water folder, running a test version of in.tip4pF.py.  
+\item Ran the simulation for 100,000 steps using time length 0.5.  Density approached values aroun 0.98/0.99 by at least before 50,000 steps.  Simulation video looked reasonable.    
+\item Ran a restart simulation for 50,000 steps, starting at the previous simulation's 50,000th step.  Density approached 0.985 after the 50,000 steps, which is good.  Video also looks very reasonable.  
+\item Tomorrow, I will start with the file in.tip4pF\_restart7.5.py and build from it the hexane-water simulation, checking videos/densities at each step to see where things go wrong!  
 \end{enumerate}
 
 

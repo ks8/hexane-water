@@ -96,7 +96,7 @@ def process_datafile(files):
 	num_angletype_hexane = contents_hexane[9].split()
 	num_dihedraltype_hexane = contents_hexane[10].split()
 
-	# Save the atomic coordinates of the original molecule 
+	# Save the atomic coordinates of the original molecule
 	coordinates_hexane = np.zeros([int(num_atoms_hexane[0]), 3])
 	atom_index_hexane = contents_hexane.index("Atoms\n")
 	for i in range(int(num_atoms_hexane[0])):
@@ -105,16 +105,16 @@ def process_datafile(files):
 		coordinates_hexane[i][1] = float(coordinates_contents[5])
 		coordinates_hexane[i][2] = float(coordinates_contents[6])
 
-	# Calculate the center of geometry of the original molecule 
+	# Calculate the center of geometry of the original molecule
 	center_original_type1 = np.mean(coordinates_hexane, axis = 0)
 
 	# Atoms per molecule for hexane
 	atoms_per_molecule_hexane = 20
 
-	# Calculate the maximum dimensional range of the molecule (prevent overlapping using appropriate spacing) 
+	# Calculate the maximum dimensional range of the molecule (prevent overlapping using appropriate spacing)
 	ranges_hexane = max(np.max(coordinates_hexane[0:atoms_per_molecule_hexane], axis = 0) - np.min(coordinates_hexane[0:atoms_per_molecule_hexane], axis = 0))
-	
-	
+
+
 	# Calculate number of atoms
 	num_atoms_line = contents1[indices_containing_substring(contents1, "numAtoms")[0]].split()
 	index = indices_containing_substring(contents1[indices_containing_substring(contents1, "numAtoms")[0]].split(), "numAtoms")[0]
@@ -171,7 +171,7 @@ def process_datafile(files):
 	y_boxlength = yhi - ylo
 	z_boxlength = zhi - zlo
 
-	
+
 	# List to hold positions
 	positions = []
 
@@ -230,7 +230,7 @@ def process_datafile(files):
 	state.shoutEvery = 100
 	state.units.setReal()
 	state.dt = 0.5
-	nSteps   = 4000000
+	nSteps   = 400000
 	the_temp = 298.15
 	printFreq= 1000
 
@@ -238,9 +238,9 @@ def process_datafile(files):
 	hydrogenHandle = 'HY'
 	mSiteHandle = 'M'
 
-	nBeads = 1
-	the_temp = 298.15
-	the_temp *= nBeads
+	# nBeads = 1
+	# the_temp = 298.15
+	# the_temp *= nBeads
 
 	state.atomParams.addSpecies(handle=oxygenHandle, mass=15.9994, atomicNum=8)
 	state.atomParams.addSpecies(handle=hydrogenHandle, mass=1.0074, atomicNum=1)
@@ -300,18 +300,22 @@ def process_datafile(files):
 
 	charge = FixChargeEwald(state, 'charge', 'all')
 	charge.setError(0.01,state.rCut,3)
+	state.activateFix(charge)
 
 	fixNVT = FixNVTAndersen(state, handle='nvt', groupHandle='all', temp=the_temp, nu=0.01)
 	fixNVT.setParameters(10)
 	state.activateFix(fixNVT)
 
-		
-	
+	fixPressure = FixPressureBerendsen(state, 'npt', 1.0, 1000, 5)
+	state.activateFix(fixPressure)
+
+
+
 	reader = LAMMPS_Reader(state=state, setBounds=True, nonbondFix = ljcut, bondFix = bondHARM, angleFix = angleHARM, dihedralFix = dihedralOPLS, atomTypePrefix = 'lmps_')
 	reader.read(dataFn = 'hexane_restart.txt', inputFns = ['hexane.in.settings'])
 
-		
-	# Establish arithmetic mixing rules
+
+	# Establish geometric mixing rules
 	epsilon_lmps_0 = 0.018252
 	sigma_lmps_0 = 2.467643
 
@@ -344,8 +348,24 @@ def process_datafile(files):
 	ljcut.setParameter('sig',oxygenHandle, 'lmps_4', (sigma + sigma_lmps_4)/2)
 
 
+	# ljcut.setParameter('eps',oxygenHandle, 'lmps_0', 2*math.sqrt(epsilon*epsilon_lmps_0)*((pow(sigma, 3) + pow(sigma_lmps_0, 3))/(pow(sigma, 6) + pow(sigma_lmps_0, 3))))
+	# ljcut.setParameter('sig',oxygenHandle, 'lmps_0', pow((pow(sigma, 6) + pow(sigma_lmps_0, 6))/2, 1/6))
 
-	# Discover the bounds of the system in order to construct a tight box 
+ # 	ljcut.setParameter('sig',oxygenHandle, 'lmps_1', 2*math.sqrt(epsilon*epsilon_lmps_1)*((pow(sigma, 3) + pow(sigma_lmps_1, 3))/(pow(sigma, 6) + pow(sigma_lmps_1, 3))))
+ # 	ljcut.setParameter('sig',oxygenHandle, 'lmps_1', pow((pow(sigma, 6) + pow(sigma_lmps_1, 6))/2, 1/6))
+
+	# ljcut.setParameter('eps',oxygenHandle, 'lmps_2', 2*math.sqrt(epsilon*epsilon_lmps_2)*((pow(sigma, 3) + pow(sigma_lmps_2, 3))/(pow(sigma, 6) + pow(sigma_lmps_2, 3))))
+	# ljcut.setParameter('sig',oxygenHandle, 'lmps_2', pow((pow(sigma, 6) + pow(sigma_lmps_2, 6))/2, 1/6))
+
+	# ljcut.setParameter('eps',oxygenHandle, 'lmps_3', 2*math.sqrt(epsilon*epsilon_lmps_3)*((pow(sigma, 3) + pow(sigma_lmps_3, 3))/(pow(sigma, 6) + pow(sigma_lmps_3, 3))))
+	# ljcut.setParameter('sig',oxygenHandle, 'lmps_3', pow((pow(sigma, 6) + pow(sigma_lmps_3, 6))/2, 1/6))
+
+	# ljcut.setParameter('eps',oxygenHandle, 'lmps_4', 2*math.sqrt(epsilon*epsilon_lmps_4)*((pow(sigma, 3) + pow(sigma_lmps_4, 3))/(pow(sigma, 6) + pow(sigma_lmps_4, 3))))
+	# ljcut.setParameter('sig',oxygenHandle, 'lmps_4', pow((pow(sigma, 6) + pow(sigma_lmps_4, 6))/2, 1/6))
+
+
+
+	# Discover the bounds of the system in order to construct a tight box
 
 
 	# Set an initial guess
@@ -368,7 +388,7 @@ def process_datafile(files):
 			bounds_xhi = x_pos
 		if x_pos < bounds_xlo:
 			bounds_xlo = x_pos
-		
+
 		if y_pos > bounds_yhi:
 			bounds_yhi = y_pos
 		if y_pos < bounds_ylo:
@@ -377,7 +397,7 @@ def process_datafile(files):
 		if z_pos > bounds_zhi:
 			bounds_zhi = z_pos
 		if z_pos < bounds_zlo:
-			bounds_zlo = z_pos	
+			bounds_zlo = z_pos
 
 
 	# Loop over the new translated and unwrapped water coordinates
@@ -392,7 +412,7 @@ def process_datafile(files):
 				bounds_xhi = x_pos
 			if x_pos < bounds_xlo:
 				bounds_xlo = x_pos
-		
+
 			if y_pos > bounds_yhi:
 				bounds_yhi = y_pos
 			if y_pos < bounds_ylo:
@@ -403,7 +423,7 @@ def process_datafile(files):
 			if z_pos < bounds_zlo:
 				bounds_zlo = z_pos
 
-	
+
 
 	loVector = Vector(bounds_xlo, bounds_ylo, bounds_zlo)
 	hiVector = Vector(bounds_xhi, bounds_yhi, bounds_zhi)
@@ -411,8 +431,8 @@ def process_datafile(files):
 
 	state.bounds = Bounds(state, lo = loVector, hi = hiVector)
 
-	
-	
+
+
 
 	dataTemp = state.dataManager.recordTemperature(interval=100)
 	InitializeAtoms.initTemp(state, 'all', the_temp)
@@ -421,17 +441,17 @@ def process_datafile(files):
 
 
 
-	state.nPerRingPoly = nBeads
-	state.preparePIMD(the_temp)
+	# state.nPerRingPoly = nBeads
+	# state.preparePIMD(the_temp)
 
 
 
 
-	writeconfig = WriteConfig(state, handle='writer', fn='output_webb_hexane_preequil_check', writeEvery=printFreq, format='xyz')
+	writeconfig = WriteConfig(state, handle='writer', fn='output_interface_classical_geometric', writeEvery=printFreq, format='xyz')
 	state.activateWriteConfig(writeconfig)
 
-	writeRestart = WriteConfig(state, handle='restart', fn='output_webb_hexane_preequil_check*', format='xml', writeEvery=50000)
-	state.activateWriteConfig(writeRestart)
+	# writeRestart = WriteConfig(state, handle='restart', fn='output_interface_1bead*', format='xml', writeEvery=printFreq)
+	# state.activateWriteConfig(writeRestart)
 
 	writeconfig.write()
 
@@ -439,7 +459,7 @@ def process_datafile(files):
 
 
 
-	
+
 
 
 

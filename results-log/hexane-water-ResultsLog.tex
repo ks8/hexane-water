@@ -455,6 +455,30 @@ These are snapshots of the NPT result:
 \item Tomorrow, I will start with the file in.tip4pF\_restart7.5.py and build from it the hexane-water simulation, checking videos/densities at each step to see where things go wrong!  
 \end{enumerate}
 
+\subsection{3/15/2018}
+\begin{enumerate}
+\item Solved the problem.  The Ewald summation fix was not being activated.  ALL fixes must be activated in DASH.
+\item To confirm, currently running: DASH simulation of 500 TAFFI hexane, 4650 TIP4P/F water, arithmetic mixing, NPT Andersen/Berendsen at T = 298.15 K and P = 1.0, 400,000 simulation steps of length 0.5 fs, NPT pre-equilibration of each slab at 298.15 K and 1.0 atm.  Potential cutoff at 12.0, long-range Ewald summation.  Classical simulation, no path integrals.     
+\end{enumerate}
+
+\subsection{3/22/2018}
+\begin{enumerate}
+\item Simulation above finished.  Results are shown below.  The simulation looks clean: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{dash_taffi-tip4pF_classical_arithmetic_NPT_0}
+\caption{DASH simmulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT Andersen/Berendsen at T = 298.15K and P = 1 atm, 240,000 timesteps of length 0.5 fs, NPT pre-equilibration of each slab at 298.15K and same P.  Cutoff = 12.0, Ewald summation.  Classical simulation, no path integrals.  This is the 0th timestep.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{dash_taffi-tip4pF_classical_arithmetic_NPT_400000}
+\caption{DASH simmulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT Andersen/Berendsen at T = 298.15K and P = 1 atm, 240,000 timesteps of length 0.5 fs, NPT pre-equilibration of each slab at 298.15K and same P.  Cutoff = 12.0, Ewald summation.  Classical simulation, no path integrals.  This is the 400,000th timestep.}
+\end{figure}
+
+\end{enumerate}
+
 
 
 

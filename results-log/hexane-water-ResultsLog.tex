@@ -479,6 +479,12 @@ These are snapshots of the NPT result:
 
 \end{enumerate}
 
+\subsection{3/26/2018}
+\begin{enumerate}
+\item Added a python operation to interface.py that collects densities information.  Ran a test: DASH simulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT Andersen/Berendsen at T = 298.15K and P = 1.0 atm, 400,000 timesteps of length 0.5 fs, NPT pre-equilibration of each slab at 298.15K and same P.  Cutoff = 12.0, Ewald summation.  Classical simulation, no path integrals.  
+\item After 400,000 steps, the density profiles converge to the following: 0.9858, 1.0191, 0.9989, 1.0086, 0.7922, 0.0233, 0, 0, 0, 0.1867, which are values for the z-axis cut into 10 slices, starting from the water end at negative z and moving in the positive z direction.  Took about 200,000 steps to converge to this density profile.  Next time, we will do a more fine-grained one, check how they are actually computed in papers, then run this and plot the result and compute the 90-10 width!  
+\end{enumerate}
+
 
 
 

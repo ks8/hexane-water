@@ -315,7 +315,7 @@ def process_datafile(files):
 	reader.read(dataFn = 'hexane_restart.txt', inputFns = ['hexane.in.settings'])
 
 
-	# Establish geometric mixing rules
+	# Establish arithmetic mixing rules
 	epsilon_lmps_0 = 0.018252
 	sigma_lmps_0 = 2.467643
 
@@ -447,24 +447,60 @@ def process_datafile(files):
 
 
 
-	writeconfig = WriteConfig(state, handle='writer', fn='output_interface_classical_geometric', writeEvery=printFreq, format='xyz')
+	writeconfig = WriteConfig(state, handle='writer', fn='output_interface_classical_arithmetic', writeEvery=printFreq, format='xyz')
 	state.activateWriteConfig(writeconfig)
 
 	# writeRestart = WriteConfig(state, handle='restart', fn='output_interface_1bead*', format='xml', writeEvery=printFreq)
 	# state.activateWriteConfig(writeRestart)
 
-	writeconfig.write()
+	writeconfig.write()	
 
-	#exit()
+	# Empty list of densities
+	densities = []
 
+	# Density profile calculation function
+	def density_profile(currentTurn):
 
+		z_len = state.bounds.hi[2] - state.bounds.lo[2]
+		y_len = state.bounds.hi[1] - state.bounds.lo[1]
+		x_len = state.bounds.hi[0] - state.bounds.lo[0]
 
+		volume = y_len*x_len*(z_len/10.0)
+
+		density_segments = []
+
+		for i in range(10):
+
+			mass = 0.0
+
+			for atom in state.atoms:
+
+				if atom.pos[2] < (state.bounds.lo[2] + (i + 1)*z_len/10.0) and atom.pos[2] > (state.bounds.lo[2] + i*z_len/10.0) and atom.type in ['OW', 'HY']:
+					
+					mass += atom.mass
+
+			density_segments.append((1.0/0.6022)*(mass/volume))
+
+		densities.append(density_segments)
+
+		
+	# Construct density profile python operation
+	density_profileOperation = PythonOperation(handle = 'densOp', operateEvery = 1000, operation = density_profile)
+
+	# Activate density profile python operation
+	state.activatePythonOperation(density_profileOperation)
 
 
 
 
 	integVerlet = IntegratorVerlet(state)
 	integVerlet.run(nSteps)
+
+
+
+	for density_val in densities:
+
+		print(density_val)
 
 
 

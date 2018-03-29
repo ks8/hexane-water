@@ -483,7 +483,7 @@ These are snapshots of the NPT result:
 \begin{enumerate}
 \item Added a python operation to interface.py that collects densities information.  Ran a test: DASH simulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT Andersen/Berendsen at T = 298.15K and P = 1.0 atm, 400,000 timesteps of length 0.5 fs, NPT pre-equilibration of each slab at 298.15K and same P.  Cutoff = 12.0, Ewald summation.  Classical simulation, no path integrals.  
 \item After 400,000 steps, the density profiles converge to the following: 0.9858, 1.0191, 0.9989, 1.0086, 0.7922, 0.0233, 0, 0, 0, 0.1867, which are values for the z-axis cut into 10 slices, starting from the water end at negative z and moving in the positive z direction.  Took about 200,000 steps to converge to this density profile.  Next time, we will do a more fine-grained one, check how they are actually computed in papers, then run this and plot the result and compute the 90-10 width! 
-\end{enumerate}
+\end{enumerate}T
 
 \subsection{3/27/2018}
 \begin{enumerate}
@@ -491,6 +491,29 @@ These are snapshots of the NPT result:
 \item We will begin first with "simple" block averaging.  We will do 200,000 fs of system equilibration and then 3,000,000 fs of system run.  In terms of the program, what we need to do is just write the densities in 0.5 Angstroms slabs parallel to the z-axis.  FOR THE TIME BEING, I'm going to do this in NVT, simply because constant volume will lend itself better to a consistent way of computing density profiles.  However, we will do the initial equilibration in NPT.  
 \item Wrote a temporary program, interface\_densities.py, that records the density profiles using 200 bins. It has NPT equilibration for 400,000 steps and then computes density profiles every 1000 steps for 200,000 steps in NVT conditions.  This is running now.
 \item I also wrote density\_profile\_analysis.py which will plot the density profile. 
+\item So, the next step will be to check this result in the density profile analysis tool and then develop the full machinery for analyzing the water density profile, followed by other profiles etc. more rigorously.  
+\end{enumerate}
+
+\subsection{3/29/2018}
+
+\begin{enumerate}
+\item Need to write a program that can take the hexane\_restart.txt file and the output\_interface.xml file as inputs and restart a simulation of the interface.  This way, we can avoid the time-consuming problem of doing pre-equilibration.  Pre-equilibration can be done as just one run.  This process shouldn't be too hard.  
+\item Performed the following simulation: DASH simulation of 500 TAFFI hexane, 3650 TIP4P/F water, arithmetic mixing, NPT Andersen/Berendsen at T = 298.15 K and P = 1.0 atm, 300,000 timesteps of length 0.5 fs equilibration followed by 1000 production steps of length 0.5 fs, NPT pre-equilibration of each slab at 298.15 K and same P.  Cutoff = 12.0, Ewald summation.  Classical simulation, no path integrals.  During production run, computed density of water in 200 parallel slabs along the z-direction every 10 simulation steps.  We obtain the following density profile of water:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{water_density_profile}
+\caption{Density of water component across 200 bins in the interface normal direction.}
+\end{figure}
+
+We then fit to the error function profile as described in Patel et. al (2006), and obtain the following parameters: $\rho_W = 0.997, h_W = 94.212, w_c = 1.87 Angstroms$, which is in good agreement with previous simulations and experiments.  A plot of the fit is shown below: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{water_density_profile_fit}
+\caption{Density of water component across 200 bins in the interface normal direction.}
+\end{figure}
+
 \end{enumerate}
 
 

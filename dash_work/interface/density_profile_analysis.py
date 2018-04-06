@@ -19,36 +19,56 @@ from scipy.optimize import curve_fit
 
 
 # Upload the density profile data
-density_dat = pd.read_csv('densities_water.txt', sep='\t', error_bad_lines=False, header=None)
-density_dat = np.asarray(density_dat)
+density_dat_water = pd.read_csv('densities_water.txt', sep='\t', error_bad_lines=False, header=None)
+density_dat_water = np.asarray(density_dat_water)
+density_dat_hexane = pd.read_csv('densities_hexane.txt', sep='\t', error_bad_lines=False, header=None)
+density_dat_hexane = np.asarray(density_dat_hexane)
 
 # Compute the average for each bin
-average_profile = np.mean(density_dat, axis=0)
+average_profile_water = np.mean(density_dat_water, axis=0)
+average_profile_hexane = np.mean(density_dat_hexane, axis=0)
 
 # Specify data
 xdata = np.linspace(0, 1, 200)
-ydata = average_profile
+ydata_water = average_profile_water
+ydata_hexane = average_profile_hexane
 
 
-# Define the error function profile we fit to
+# Define the error function profile we fit to for water
 def rho_W(z, rho, h, w_c):
 
 	return 0.5*rho - 0.5*rho*scipy.special.erf((z - h)/(sqrt(2)*w_c))
 
-popt, pcov = curve_fit(rho_W, xdata, ydata)
+# Define the error function profile we fit to for hexane
+def rho_H(z, rho, h, w_c):
 
-print(popt)
+	return 0.5*rho + 0.5*rho*scipy.special.erf((z - h)/(sqrt(2)*w_c))
 
-w_c = 110*popt[2]
+popt_water, pcov_water = curve_fit(rho_W, xdata, ydata_water)
+
+print(popt_water)
+
+popt_hexane, pcov_hexane = curve_fit(rho_H, xdata, ydata_hexane)
+
+print(popt_hexane)
+
+
+
+w_c_water = 110*popt_water[2]
+w_c_hexane = 110*popt_hexane[2]
 
 # Plot the data
-plt.plot(xdata, ydata, label='data')
-plt.plot(xdata, rho_W(xdata, *popt), 'g--', label='fit: density=%5.3f g/${cm}^3$, interfacial width=%5.3f $\AA$' % (popt[0], w_c))
+plt.plot(xdata, ydata_water, label='water data')
+plt.plot(xdata, ydata_hexane, label='hexane data')
+# plt.plot(xdata, rho_W(xdata, *popt_water), 'g--', label='fit: density=%5.3f g/${cm}^3$, interfacial width=%5.3f $\AA$' % (popt_water[0], w_c_water))
+# plt.plot(xdata, rho_H(xdata, *popt_hexane), 'r--', label='fit: density=%5.3f g/${cm}^3$, interfacial width=%5.3f $\AA$' % (popt_hexane[0], w_c_hexane))
+plt.plot(xdata, rho_W(xdata, *popt_water), 'g--', label='fit: density=%5.3f g/${cm}^3$' % (popt_water[0]))
+plt.plot(xdata, rho_H(xdata, *popt_hexane), 'r--', label='fit: density=%5.3f g/${cm}^3$' % (popt_hexane[0]))
 plt.xlabel('Normalized box length in z-direction ($L_z$ = 110 $\AA$)')
 plt.ylabel('Density (g/${cm}^3$)')
 plt.legend()
 plt.title('Water density profile (averaged over 1 ps)')
-plt.savefig('water_density_profile_fit.png')
+plt.savefig('interface_density_profile_fit.png')
 
 
 

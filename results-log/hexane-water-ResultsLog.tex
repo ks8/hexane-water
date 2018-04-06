@@ -516,7 +516,31 @@ We then fit to the error function profile as described in Patel et. al (2006), a
 
 \end{enumerate}
 
+\subsection{4/5/2018}
 
+\begin{enumerate}
+\item I checked that hexane.in.settings, which contains the intramolecular mixing rules for TAFFI hexane, exhibits Waldman-Hagler mixing:
+
+\begin{align}
+\begin{split}
+\epsilon_{ij} = 2\sqrt{\epsilon_i\epsilon_j}\left(\frac{\sigma_i^3\dot\sigma_j^3}{\sigma_i^6 + \sigma_j^6}\right)\\
+\sigma_{ij} = \left(\frac{\sigma_i^6 + \sigma_j^6}{2}\right)^{\frac{1}{6}}
+\end{split}
+\end{align}
+
+\item I added the following functionality to interface.py: collecting densities for both water and hexane, and deciding standard versus waldman-hagler mixing, number of equilibration and production steps, the output filenames.  Below is a preliminary figure of combined density profiles taken from just 2000 simulation steps: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{double_profile_test}
+\caption{Double density profile test.}
+\end{figure}
+
+\item I am now running : DASH simulation of 500 TAFFI hexane, 3650 TIP4P/F water, standard mixing, NPT Andersen/Berendsen at T = 298.15 K and P = 1.0 atm, 300,000 timesteps of length 0.5 fs equilibration followed by 100000 production steps of length 0.5 fs, NPT pre-equilibration of each slab at 298.15 K and same P.  Cutoff = 12.0, Ewald summation.  Classical simulation, no path integrals.  During production run, computing density of water in 200 parallel slabs along the z-direction every 100 simulation steps.  
+
+\item For waldman, I am now running the same as above except waldman mixing, 400,000 equilibration steps only 1000 production, no density calculation.  
+
+\end{enumerate}
 
 
 

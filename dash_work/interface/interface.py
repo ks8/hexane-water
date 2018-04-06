@@ -31,6 +31,11 @@ def create_parser():
     parser = argparse.ArgumentParser(description='Read data files')
     parser.add_argument('-water_restart_file', dest='water_restart_file', default=None, help='Name of water DASH restart xml file')
     parser.add_argument('-hexane_lammps_file', dest='hexane_lammps_file', default=None, help='Name of hexane LAMMPS input file')
+    parser.add_argument('-density_calc', dest='density_calc', default=False, help='Boolean for computing densities during production run')
+    parser.add_argument('-nSteps_equilibration', dest='nSteps_equilibration', default=False, help='Number of equilibration steps')
+    parser.add_argument('-nSteps_production', dest='nSteps_production', default=False, help='Number of production steps')
+    parser.add_argument('-mix', dest='mix', default='standard', help='Mixing rule, which is either standard or waldman')
+    parser.add_argument('-filename', dest='filename', default='output_interface', help='Name of output files')
 
     return parser
 
@@ -43,6 +48,11 @@ def convert_args(args):
     files['hexane_lammps_file'] = args.hexane_lammps_file
 
     options = {}
+    options['density_calc'] = args.density_calc
+    options['nSteps_equilibration'] = args.nSteps_equilibration
+    options['nSteps_production'] = args.nSteps_production
+    options['mix'] = args.mix
+    options['filename'] = args.filename
 
     # Print confirmation
     print("**************************")
@@ -53,6 +63,15 @@ def convert_args(args):
 
     return files, options
 
+""" Function to convert a string to a boolean for the argparse options"""
+def str2bool(string):
+	if string.lower() == 'true':
+		return True
+	elif string.lower() == 'false':
+		return False
+	else:
+		raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def indices_containing_substring(the_list, substring):
     indices = []
     for i, s in enumerate(the_list):
@@ -60,8 +79,14 @@ def indices_containing_substring(the_list, substring):
             indices.append(i)
     return indices
 
-def process_datafile(files):
+def process_datafile(files, options):
 
+	# Parse options
+	density_calc = str2bool(options['density_calc'])
+	nSteps_equilibration = int(options['nSteps_equilibration'])
+	nSteps_production = int(options['nSteps_production'])
+	mix = str(options['mix'])
+	filename = str(options['filename'])
 
 	# Read restart files
 	f1 = open(files['water_restart_file'], 'r')
@@ -332,36 +357,41 @@ def process_datafile(files):
 	sigma_lmps_4 = 3.430693
 
 
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_0', math.sqrt(epsilon*epsilon_lmps_0))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_0', (sigma + sigma_lmps_0)/2)
-
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_1', math.sqrt(epsilon*epsilon_lmps_1))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_1', (sigma + sigma_lmps_1)/2)
-
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_2', math.sqrt(epsilon*epsilon_lmps_2))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_2', (sigma + sigma_lmps_2)/2)
-
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_3', math.sqrt(epsilon*epsilon_lmps_3))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_3', (sigma + sigma_lmps_3)/2)
-
-	ljcut.setParameter('eps',oxygenHandle, 'lmps_4', math.sqrt(epsilon*epsilon_lmps_4))
-	ljcut.setParameter('sig',oxygenHandle, 'lmps_4', (sigma + sigma_lmps_4)/2)
+	if mix == 'standard':
 
 
-	# ljcut.setParameter('eps',oxygenHandle, 'lmps_0', 2*math.sqrt(epsilon*epsilon_lmps_0)*((pow(sigma, 3) + pow(sigma_lmps_0, 3))/(pow(sigma, 6) + pow(sigma_lmps_0, 3))))
-	# ljcut.setParameter('sig',oxygenHandle, 'lmps_0', pow((pow(sigma, 6) + pow(sigma_lmps_0, 6))/2, 1/6))
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_0', math.sqrt(epsilon*epsilon_lmps_0))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_0', (sigma + sigma_lmps_0)/2)
 
- # 	ljcut.setParameter('sig',oxygenHandle, 'lmps_1', 2*math.sqrt(epsilon*epsilon_lmps_1)*((pow(sigma, 3) + pow(sigma_lmps_1, 3))/(pow(sigma, 6) + pow(sigma_lmps_1, 3))))
- # 	ljcut.setParameter('sig',oxygenHandle, 'lmps_1', pow((pow(sigma, 6) + pow(sigma_lmps_1, 6))/2, 1/6))
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_1', math.sqrt(epsilon*epsilon_lmps_1))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_1', (sigma + sigma_lmps_1)/2)
 
-	# ljcut.setParameter('eps',oxygenHandle, 'lmps_2', 2*math.sqrt(epsilon*epsilon_lmps_2)*((pow(sigma, 3) + pow(sigma_lmps_2, 3))/(pow(sigma, 6) + pow(sigma_lmps_2, 3))))
-	# ljcut.setParameter('sig',oxygenHandle, 'lmps_2', pow((pow(sigma, 6) + pow(sigma_lmps_2, 6))/2, 1/6))
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_2', math.sqrt(epsilon*epsilon_lmps_2))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_2', (sigma + sigma_lmps_2)/2)
 
-	# ljcut.setParameter('eps',oxygenHandle, 'lmps_3', 2*math.sqrt(epsilon*epsilon_lmps_3)*((pow(sigma, 3) + pow(sigma_lmps_3, 3))/(pow(sigma, 6) + pow(sigma_lmps_3, 3))))
-	# ljcut.setParameter('sig',oxygenHandle, 'lmps_3', pow((pow(sigma, 6) + pow(sigma_lmps_3, 6))/2, 1/6))
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_3', math.sqrt(epsilon*epsilon_lmps_3))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_3', (sigma + sigma_lmps_3)/2)
 
-	# ljcut.setParameter('eps',oxygenHandle, 'lmps_4', 2*math.sqrt(epsilon*epsilon_lmps_4)*((pow(sigma, 3) + pow(sigma_lmps_4, 3))/(pow(sigma, 6) + pow(sigma_lmps_4, 3))))
-	# ljcut.setParameter('sig',oxygenHandle, 'lmps_4', pow((pow(sigma, 6) + pow(sigma_lmps_4, 6))/2, 1/6))
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_4', math.sqrt(epsilon*epsilon_lmps_4))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_4', (sigma + sigma_lmps_4)/2)
+
+	if mix == 'waldman':
+
+
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_0', 2*math.sqrt(epsilon*epsilon_lmps_0)*((pow(sigma, 3)*pow(sigma_lmps_0, 3))/(pow(sigma, 6) + pow(sigma_lmps_0, 6))))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_0', pow((pow(sigma, 6) + pow(sigma_lmps_0, 6))/2, 1/6))
+
+	 	ljcut.setParameter('eps',oxygenHandle, 'lmps_1', 2*math.sqrt(epsilon*epsilon_lmps_1)*((pow(sigma, 3)*pow(sigma_lmps_1, 3))/(pow(sigma, 6) + pow(sigma_lmps_1, 6))))
+	 	ljcut.setParameter('sig',oxygenHandle, 'lmps_1', pow((pow(sigma, 6) + pow(sigma_lmps_1, 6))/2, 1/6))
+
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_2', 2*math.sqrt(epsilon*epsilon_lmps_2)*((pow(sigma, 3)*pow(sigma_lmps_2, 3))/(pow(sigma, 6) + pow(sigma_lmps_2, 6))))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_2', pow((pow(sigma, 6) + pow(sigma_lmps_2, 6))/2, 1/6))
+
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_3', 2*math.sqrt(epsilon*epsilon_lmps_3)*((pow(sigma, 3)*pow(sigma_lmps_3, 3))/(pow(sigma, 6) + pow(sigma_lmps_3, 6))))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_3', pow((pow(sigma, 6) + pow(sigma_lmps_3, 6))/2, 1/6))
+
+		ljcut.setParameter('eps',oxygenHandle, 'lmps_4', 2*math.sqrt(epsilon*epsilon_lmps_4)*((pow(sigma, 3)*pow(sigma_lmps_4, 3))/(pow(sigma, 6) + pow(sigma_lmps_4, 6))))
+		ljcut.setParameter('sig',oxygenHandle, 'lmps_4', pow((pow(sigma, 6) + pow(sigma_lmps_4, 6))/2, 1/6))
 
 
 
@@ -447,62 +477,103 @@ def process_datafile(files):
 
 
 
-	writeconfig = WriteConfig(state, handle='writer', fn='output_interface_classical_arithmetic', writeEvery=printFreq, format='xyz')
+	writeconfig = WriteConfig(state, handle='writer', fn=filename, writeEvery=printFreq, format='xyz')
 	state.activateWriteConfig(writeconfig)
 
-	# writeRestart = WriteConfig(state, handle='restart', fn='output_interface_1bead*', format='xml', writeEvery=printFreq)
-	# state.activateWriteConfig(writeRestart)
+	writeRestart = WriteConfig(state, handle='restart', fn=filename+str('*'), format='xml', writeEvery=printFreq)
+	state.activateWriteConfig(writeRestart)
 
 	writeconfig.write()	
 
-	# Empty list of densities
-	densities = []
+	# Empty files of densities
+	output = open('densities_water.txt', 'w')
+	output.close()
 
-	# Density profile calculation function
+	output = open('densities_hexane.txt', 'w')
+	output.close()
+	
+
+	# Density profile calculation function for 200 histogram bins
 	def density_profile(currentTurn):
 
 		z_len = state.bounds.hi[2] - state.bounds.lo[2]
 		y_len = state.bounds.hi[1] - state.bounds.lo[1]
 		x_len = state.bounds.hi[0] - state.bounds.lo[0]
 
-		volume = y_len*x_len*(z_len/10.0)
+		volume = y_len*x_len*(z_len/200.0)
 
-		density_segments = []
+		density_segments_water = []
+		density_segments_hexane = []
 
-		for i in range(10):
+		for i in range(200):
 
-			mass = 0.0
+			mass_water = 0.0
+			mass_hexane = 0.0
 
 			for atom in state.atoms:
 
-				if atom.pos[2] < (state.bounds.lo[2] + (i + 1)*z_len/10.0) and atom.pos[2] > (state.bounds.lo[2] + i*z_len/10.0) and atom.type in ['OW', 'HY']:
+				if atom.pos[2] < (state.bounds.lo[2] + (i + 1)*z_len/200.0) and atom.pos[2] > (state.bounds.lo[2] + i*z_len/200.0):
+
+					if atom.type in ['OW', 'HY']:
 					
-					mass += atom.mass
+						mass_water += atom.mass
 
-			density_segments.append((1.0/0.6022)*(mass/volume))
+					elif atom.type in ['lmps_0', 'lmps_1', 'lmps_2', 'lmps_3', 'lmps_4']:
 
-		densities.append(density_segments)
+						mass_hexane += atom.mass
+
+
+			density_segments_water.append((1.0/0.6022)*(mass_water/volume))
+			density_segments_hexane.append((1.0/0.6022)*(mass_hexane/volume))
+
+		output = open('densities_water.txt', 'a')
+		for i in range(len(density_segments_water)):
+			if i == (len(density_segments_water) - 1):
+				output.write(str(density_segments_water[i]))
+			else:
+				output.write(str(density_segments_water[i]) + '\t')
+		output.write('\n')
+		output.close()
+
+
+		output = open('densities_hexane.txt', 'a')
+		for i in range(len(density_segments_hexane)):
+			if i == (len(density_segments_hexane) - 1):
+				output.write(str(density_segments_hexane[i]))
+			else:
+				output.write(str(density_segments_hexane[i]) + '\t')
+		output.write('\n')
+		output.close()
+
 
 		
 	# Construct density profile python operation
-	density_profileOperation = PythonOperation(handle = 'densOp', operateEvery = 1000, operation = density_profile)
-
-	# Activate density profile python operation
-	state.activatePythonOperation(density_profileOperation)
+	density_profileOperation = PythonOperation(handle = 'densOp', operateEvery = 100, operation = density_profile)
 
 
 
-
+	# Equilibration run in NPT
 	integVerlet = IntegratorVerlet(state)
-	integVerlet.run(nSteps)
+	integVerlet.run(nSteps_equilibration)
+
+	# Deactivate barostat to return to NVT conditions
+	# state.deactivateFix(fixPressure)
+
+
+	if density_calc:
+
+		# Activate density profile python operation
+		state.activatePythonOperation(density_profileOperation)
+
+
+	# Production run
+	integVerlet.run(nSteps_production)
 
 
 
-	for density_val in densities:
+	exit()
 
-		print(density_val)
-
-
+		
 
 
 
@@ -512,7 +583,7 @@ def main(argv):
     args = parser.parse_args()
     files, options = convert_args(args)
 
-    process_datafile(files)
+    process_datafile(files, options)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

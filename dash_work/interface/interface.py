@@ -480,16 +480,16 @@ def process_datafile(files, options):
 	writeconfig = WriteConfig(state, handle='writer', fn=filename, writeEvery=printFreq, format='xyz')
 	state.activateWriteConfig(writeconfig)
 
-	writeRestart = WriteConfig(state, handle='restart', fn=filename+str('*'), format='xml', writeEvery=printFreq)
-	state.activateWriteConfig(writeRestart)
+	# writeRestart = WriteConfig(state, handle='restart', fn=filename+str('*'), format='xml', writeEvery=printFreq)
+	# state.activateWriteConfig(writeRestart)
 
 	writeconfig.write()	
 
 	# Empty files of densities
-	output = open('densities_water.txt', 'w')
+	output = open(filename+'densities_water.txt', 'w')
 	output.close()
 
-	output = open('densities_hexane.txt', 'w')
+	output = open(filename+'densities_hexane.txt', 'w')
 	output.close()
 	
 
@@ -526,7 +526,7 @@ def process_datafile(files, options):
 			density_segments_water.append((1.0/0.6022)*(mass_water/volume))
 			density_segments_hexane.append((1.0/0.6022)*(mass_hexane/volume))
 
-		output = open('densities_water.txt', 'a')
+		output = open(filename+'densities_water.txt', 'a')
 		for i in range(len(density_segments_water)):
 			if i == (len(density_segments_water) - 1):
 				output.write(str(density_segments_water[i]))
@@ -536,7 +536,7 @@ def process_datafile(files, options):
 		output.close()
 
 
-		output = open('densities_hexane.txt', 'a')
+		output = open(filename+'densities_hexane.txt', 'a')
 		for i in range(len(density_segments_hexane)):
 			if i == (len(density_segments_hexane) - 1):
 				output.write(str(density_segments_hexane[i]))
@@ -548,7 +548,7 @@ def process_datafile(files, options):
 
 		
 	# Construct density profile python operation
-	density_profileOperation = PythonOperation(handle = 'densOp', operateEvery = 100, operation = density_profile)
+	density_profileOperation = PythonOperation(handle = 'densOp', operateEvery = 100, operation = density_profile, synchronous=True)
 
 
 

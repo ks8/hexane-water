@@ -542,6 +542,165 @@ We then fit to the error function profile as described in Patel et. al (2006), a
 
 \end{enumerate}
 
+\subsection{4/9/2018}
+
+\begin{enumerate}
+\item Finished the following run: DASH simulation of 500 TAFFI hexane, 3650 TIP4P/F water, standard mixing, NPT Andersen/Berendsen at T = 298.15 K and P = 1.0 atm, 300,000 timesteps of length 0.5 fs equilibration followed by 100000 production steps of length 0.5 fs, NPT pre-equilibration of each slab at 298.15 K and same P.  Cutoff = 12.0, Ewald summation.  Classical simulation, no path integrals.  During production run, computing density of water in 200 parallel slabs along the z-direction every 100 simulation steps.
+
+\item Problem: After step 300400, i.e. after 400 production steps, the program quits with a "segmentation fault" error.  
+
+\item Although there were only three datapoints, nevertheless it is worth pointing out that the system was able to collect both water and hexane densities.  Using the density profile analysis script, we obtain the following plot of the profile over the first 400 production steps: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{double_profile}
+\caption{Double density profile after 400 production steps as described above.  Densities and profiles look reasonable.}
+\end{figure}
+
+\item Also ran the same as above excep using waldman mixing, 400,000 equilibration steps only 1000 production, no density calculation.  Here is a plot after the whole simulation:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{waldman_pic}
+\caption{Final snapshot of simulation as described above with Waldman-Hagler mixing.  Looks reasonable.}
+\end{figure}
+
+\item From now on we will use W-H mixing.  However, there is still the problem of segmentation fault.  So, we will run three tests o try to discover the origin of this error:
+\item Test 1: Run a program that does 300000 pre-equilibration steps and 300000 production steps, no density calculation, see if an error occurs.
+\item Test 2: Run a program that does 600000 total pre-equilibration steps and only 1 production step (basically zero production), see if an error occurs, no density calculation.
+\item Test 3: Run a program that does 300000 pre-equilibration steps and 300000 production steps, computing the density the whole time. 
+\item Test 4: Run a program that does 600000 pre-equilibration steps and 300000 production steps, computing density the whole time.   
+
+\item For the sake of not repeating information, until I note otherwise, all DASH interfacial simulations have the following properties: 500 TAFFI hexane, 3650 TIP4P/F water, waldman-hagler mixing, NPT Andersen/Berendsen at T = 298.15 K and P = 1.0 atm, timestep 0.5 fs, NPT pre-equilibration of each slab at 298.15 K and same P.  Cutoff = 12.0, Ewald summation.  Classical simulation, no path integrals. 
+
+\item Test 1: Running it now.  
+\item Test 2: Running now.  
+\item Test 3: Running now.  
+
+\item We also want to test density as a function of temperature for the pure hexane and pure water systems.  Let's start with hexane.  In in.webb\_hexane.py, added a final line that computes the standard deviation as well as mean of list of densities.  Mean and sd are computed for the last 500 recordings of density.  Ran lammps\_replicator script to produce input.txt script of initial 500 molecule hexane lattice.  Running DASH system with 500 TAFFI molecules, W-H mixing, NPT Andersen/Berendsen at T = 298.15 K and P = 1.0 atm, timestep of 1 fs, cutoff = 10, 2,000,000 steps.  Density is calculated every 100 steps, and the mean and sd calculations below represent the last 500 recordings, or 50,000 steps.  
+
+\item T = 298.15 K, $\rho = 0.65166 g/ml$, $\sigma = 0.0004788 g/ml$, expt: 0.65478 $g/ml$ on NIST Chemistry Webbook at P = 1.0 atm.  So, the density is off by -0.476\%.  
+\item T = 320 K, $\rho = 0.62475 g/ml$, $\sigma = 0.00072859 g/ml$, expt: 0.63434 $g/ml$.  So, the density is off by -1.5118\%.  
+\item T = 270 K, $\rho = 0.68196 g/ml$, $\sigma = 0.000927 g/ml$, expt: 0.68025 $g/ml$.  So, the density is off by +0.25\%.  
+
+
+\item Now we will move onto water.  Created a new file in.tip4pF\_dens.py, in which I added the same mean and sd calculations as above.  Time step 0.5 fs, 2,000,000 steps, initial density of 0.997, 3650 molecules, cutoff = 9.0.  Running this now.  
+
+\item T = 298.15K, $\rho = 0.98919 g/ml$, $\sigma = 0.00116 g/ml$, https://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185\&Action=Page expt: 0.99705 $g/ml$ at P = 1.0 atm.  So, the density is off by -\%0.00788.   
+\item T = 270K, $\rho = 0.988 g/ml$, $\sigma = 0.001555 g/ml$, but this is below freezing??
+\item T = 300 K, $\rho = 0.9877 g/ml$, $\sigma = 0.0034977$, expt: 0.99656.  So, the density is off by -0.00889 \%
+\item T = 320 K, $\rho = 0.98157 g/ml$, $\sigma = 0.0022$, expt: 0.989.  So, the density is off by -0.0075\%.  
+
+
+\item RESULT: Test 1 ran perfectly fine.  300,000 pre-equilibration, 300,000 production, no density calculation, no segmentation fault!  
+\item RESULT: Test 2 ran perfectly fine.  600,000 pre-equilibration steps, 1 production step, 1 production step, no density calculation, no segmentation fault!
+\item Running test 3 still.  
+
+\item Note: the units for mass in DASH are amu, and the units for distance are Angstroms.  So, we use the conversion factor $\frac{1}{0.6022}$ to convert this to $g/ml$.  
+
+\item Test 4: Same as test 3, but density calc is only every 1000 turns instead of every 100 turns.  This is the REAL test 4, not as described above.    
+
+\item Created an interface\_hexane\_restart.py file that spits out a hexane\_interface\_restart.txt file, and tried constructing an interface\_restart.py file, but resulted in green's function errors.  It creates an initial configuration that looks fine but does not integrate the system.  
+
+ 
+\item Change densities.txt file names in interface.py!  
+\end{enumerate}
+
+\subsection{4/12/2018}
+\begin{enumerate}
+\item RESULT: Test 3, program stopped after 107300, 35.77 \% done, Fatal Python error: GC object already tracked.  /tmp/slurmd/job44973736/slurm\_script: line 30: 12701 Aborted.  Computing densities every 100 steps.  
+\item RESULT: Test 4, program stopped after 112300, 37.43 \% done, computing density every 1000 steps.  Segmentation fault error.  
+\item Ok, in order to diagnose this problem, let's run more tests.  
+
+\item Test 5: 300,000 preequilibration steps, 300,000 production steps, density profile function computing density every 1000 steps is there but not activated in the sbatch script.
+\item Test 6: Same as test 5, except actually computing the density as usual every 1000 steps.
+\item Test 7: Same as above, except the density profile does not actually comput anything.
+\item Test 8: Same, except density function only active up to the loop.
+\item Test 9: Same, except density function only active up to the first write file command.  
+\item Test 10: Same, except density only active until last write file.
+\item Hopefully, these tests will dig into the details of excactly where the issue is arising.  
+\item Sent a message to Brian about this issue, and got a response saying I should try "In your PythonOperation() constructor in the python script, did you set synchronous=True?  If not, I would try that.  The default behavior is asynchronous."  So, before running all of these tests, I will try this first!
+\item In the file for test 5, called interface\_test5.py, I made this change to PythonOperation().  Let's try this now. 
+\item It appears to be working.  Modified the original interface.py to reflect this, as well as customizing filename for the density files.  Currently running DASH simulation of the interface using 400,000 preequilibration steps, followed by 300,000 production steps during which density profiles are measured every 100 steps.   
+\end{enumerate}
+
+\subsection{4/17/2018}
+
+\begin{enumerate}
+\item What we really need is to do post-production.  So, for the successful run above, we are just going to take the trajectory file and analyze that.  In this case, the file is interface-dens.xyz.  
+\end{enumerate}
+
+\subsection{4/18/2018}
+
+\begin{enumerate}
+\item Here are the results from our analysis: 
+
+\subitem Bulk water density: 0.999247086118 $g/cm^3$
+\subitem Bulk hexane density: 0.674945918949 $g/cm^3$
+\subitem Intrinsic width: 0.712788562077 Angstroms
+\subitem Water thermal width: 1.89474070104 Angstroms
+\subitem Hexane thermal width: 1.85287262473 Angstroms
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{double_profile_with_errors}
+\end{figure}
+
+\item Based on inspection, the average box length in the z-direction is assumed to be 110.0 Angstroms.  Also based on visual inspection of the profiles, the bulk region for water is determined to be 0.1 < z < 0.4, while the bulk region for hexane is 0.6 < z < 0.85.  The bulk densities for each are computed in those respective regions.  The curve fits for error function profiles, described in Patel and Brooks 2006, are fit using scipy curve\_fit function, where the bulk densities are specified but not the Gibbs dividing surfaces or the thermal width.  The widths are left to be separate.  The fits are done only in the interfacial region of the data, which is determined by inspection to be 0.4 < z < 0.6.  The standard error measurements are performed by dividing the 200 ps data into 5 blocks, and finding the SE of the mean across all 200 bins over which the averaeg profiles are computed.  The result of the SE is shaded in pink for each profile.  
+
+\item We will now run a simulation that computes 300,000 equilibration steps and 1,000,000 ps production.  The system will be NPT in equilibration, but then immediately fixed to NVT in production.  No density calculation.  Although it would be optimal to calculate the average box length after equilibration and then set V to that box length, for now we will skip that step.  NVT is to ensure that we have fixed bins over which to compute density profiles.  The python script will be named interface\_NVT.py.  
+
+
+\end{enumerate}
+
+\section{4/22/2018}
+
+\begin{enumerate}
+\item Wrote python script, molecular\_orientation\_postproduction.py that computes $S_{zz}$ in 200 slabs, and then orientation\_profile\_analysis.py that averages and plots them.  Here is the result for water:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{water_orientation}
+\end{figure}
+
+which compares favorably to one of the models discussed in Patel and Brooks (2006):
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{patel_water_orientation}
+\end{figure}
+
+These results indicate that water dipole moment is isotropic in the bulk, but orients preferentially along the interface in the interfacial region.  For hexane, we see:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{orientation_hexane}
+\end{figure}
+
+This also matches with Patel:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{patel_hexane_orientation}
+\end{figure}
+
+
+
+\end{enumerate}
+
+\subsection{4/23/2018}
+
+\begin{enumerate}
+\item Compiled latest version of DASH, placed in /home/swansonk1/NEW\_DASH.  Copied the water.py from utils.py in OLD\_DASH.  Everything seems to run smoothly, including restart files!  
+\item So now, we will run the file interface\_new.py, which has the link to new dash.  We will do 400,000 steps (i.e. 200 ps) of equilibration.  Prints restart file every 10,000 steps.  Run file is run\_new.sh.    
+\end{enumerate}
+
+\section{4/24/2018}
+
+\begin{enumerate}
+\item Trajectory data for interface\_NVT.py is contained in interface-NVT.xyz.  
+\item The first thing we want to do is to construct a production run dataset that has path integrals.  We used interface\_new.py and run\_new.sh to perform a 400,000 step (i.e. 200 ps) equilibration in NPT using the standard parameters.  Now, we will restart that simulation, except we will use path integral beads.  As proof of concept, we will start with just a few, say 16 beads.  
+\end{enumerate}
+
 
 
 

@@ -78,64 +78,17 @@ def process_datafile(files, options):
 	index_start = int(options['index_start'])
 	index_end = int(options['index_end'])
 
-	# Upload the density profile data
-	density_dat_water = pd.read_csv(files['water_density_dat'], sep='\t', error_bad_lines=False, header=None)
-	density_dat_water = np.asarray(density_dat_water)
-	density_dat_hexane = pd.read_csv(files['hexane_density_dat'], sep='\t', error_bad_lines=False, header=None)
-	density_dat_hexane = np.asarray(density_dat_hexane)
-	
-	# Choose subset of data to work with
-	density_dat_water = density_dat_water[index_start:index_end, :]
-	density_dat_hexane = density_dat_hexane[index_start:index_end, :]
-	num_samples = len(density_dat_water)
-	num_bins = len(density_dat_water[0, :])
-
-	# Compute the average for each bin
-	average_profile_water = np.mean(density_dat_water, axis=0)
-	average_profile_hexane = np.mean(density_dat_hexane, axis=0)
-
-	# Remove double counting of beads 
-	average_profile_water = np.multiply(np.array([1/nBeads]), average_profile_water)
-	average_profile_hexane = np.multiply(np.array([1/nBeads]), average_profile_hexane)
-
-	# Define global variables
-	global rho_w, rho_h
-
-	# Compute the average bulk density for water, using the specified bulk region
-	rho_w = np.mean(average_profile_water[bulk_water_zlo_bin:bulk_water_zhi_bin])
-
-	# Compute the average bulk density for hexane, using the specified bulk region
-	rho_h = np.mean(average_profile_hexane[bulk_hexane_zlo_bin:bulk_hexane_zhi_bin])
-
-	# Return the bulk densities
-	print('bulk water density: '+str(rho_w))
-	print('bulk hexane density: '+str(rho_h))
-
-	# Specify data for density profile fitting
-	xdata = np.linspace(0, 1, num_bins)
-	ydata_water = average_profile_water
-	ydata_hexane = average_profile_hexane
-
-	# Define the error function profile we fit to for water
+	# Define the water error function profile 
 	def rho_W(z, h, w_c):
 
 		return 0.5*rho_w - 0.5*rho_w*scipy.special.erf((z - h)/(sqrt(2)*w_c))
 
-	# Define the error function profile we fit to for hexane
+	# Define the hexane error function profile 
 	def rho_H(z, h, w_c):
 
 		return 0.5*rho_h + 0.5*rho_h*scipy.special.erf((z - h)/(sqrt(2)*w_c))
 
-	# Fit the water density profile and hexane density profile, defining the interfacial region as between the specified bulk regions
-	popt_water, pcov_water = curve_fit(rho_W, xdata[bulk_water_zhi_bin:bulk_hexane_zlo_bin], ydata_water[bulk_water_zhi_bin:bulk_hexane_zlo_bin])
-	popt_hexane, pcov_hexane = curve_fit(rho_H, xdata[bulk_water_zhi_bin:bulk_hexane_zlo_bin], ydata_hexane[bulk_water_zhi_bin:bulk_hexane_zlo_bin])
-
-	# Print the intrinsic and thermal widths
-	print('separate fitting intrinsic width: '+str(box_len_av*(popt_hexane[0] - popt_water[0])))
-	print('water thermal width: '+str(box_len_av*popt_water[1]))
-	print('hexane thermal width: '+str(box_len_av*popt_hexane[1]))
-
-	# Attempt at simultaneous fitting
+	# Define function for simultaneous error profile fitting
 	def my_residuals(parameters, xdata, ydata_water, ydata_hexane, density_w, density_h):
 
 		# Unpack the parameters from the parameters array
@@ -148,94 +101,191 @@ def process_datafile(files, options):
 
 		return np.concatenate((res1, res2))
 
-	par_init = np.array([popt_water[0], popt_hexane[0], popt_water[1]])
+	# Upload the density profile data
+	density_dat_water = pd.read_csv(files['water_density_dat'], sep='\t', error_bad_lines=False, header=None)
+	density_dat_water = np.asarray(density_dat_water)
+	density_dat_hexane = pd.read_csv(files['hexane_density_dat'], sep='\t', error_bad_lines=False, header=None)
+	density_dat_hexane = np.asarray(density_dat_hexane)
+	
+	# Choose subset of data to work with
+	density_dat_water = density_dat_water[index_start:index_end, :]
+	density_dat_hexane = density_dat_hexane[index_start:index_end, :]
+	num_samples = len(density_dat_water)
+	num_bins = len(density_dat_water[0, :])
 
-	fit_total, cov_total = leastsq(my_residuals, par_init, args=(xdata[bulk_water_zhi_bin:bulk_hexane_zlo_bin], ydata_water[bulk_water_zhi_bin:bulk_hexane_zlo_bin], ydata_hexane[bulk_water_zhi_bin:bulk_hexane_zlo_bin], rho_w, rho_h))
+	# Remove double counting of beads
+	density_dat_water = np.multiply(np.array(1/nBeads), density_dat_water)
+	density_dat_hexane = np.multiply(np.array(1/nBeads), density_dat_hexane)
 
-	print('total intrinsic width:  '+str(box_len_av*(fit_total[1] - fit_total[0])))
-	print('total thermal width:  '+str(box_len_av*fit_total[2]))
+	# Fit individual density profiles to get initial parameter estimates
+	average_profile_water_total = np.mean(density_dat_water, axis=0)
+	average_profile_hexane_total = np.mean(density_dat_hexane, axis=0)
 
-	# SE calculation, split the data into the specified number of blocks 
-	means_water = list(np.zeros(num_SE_blocks))
-	means_hexane = list(np.zeros(num_SE_blocks))
+	# Specify data for density profile fitting
+	xdata = np.linspace(0, 1, num_bins)
+	ydata_water = average_profile_water_total
+	ydata_hexane = average_profile_hexane_total
+
+	# Define global variables
+	global rho_w, rho_h
+
+	# Compute the average bulk density for water, using the specified bulk region
+	rho_w = np.mean(average_profile_water_total[bulk_water_zlo_bin:bulk_water_zhi_bin])
+
+	# Compute the average bulk density for hexane, using the specified bulk region
+	rho_h = np.mean(average_profile_hexane_total[bulk_hexane_zlo_bin:bulk_hexane_zhi_bin])
+
+	# Fit the water density profile and hexane density profile, defining the interfacial region as between the specified bulk regions
+	popt_water, pcov_water = curve_fit(rho_W, xdata[bulk_water_zhi_bin:bulk_hexane_zlo_bin], ydata_water[bulk_water_zhi_bin:bulk_hexane_zlo_bin])
+	popt_hexane, pcov_hexane = curve_fit(rho_H, xdata[bulk_water_zhi_bin:bulk_hexane_zlo_bin], ydata_hexane[bulk_water_zhi_bin:bulk_hexane_zlo_bin])
+
+
+	#################################### Analysis ############################################
+	# Split the data into the scpecified number of blocks and compute average profiles
+	average_profiles_water = list(np.zeros(num_SE_blocks))
+	average_profiles_hexane = list(np.zeros(num_SE_blocks))
 
 	for i in range(num_SE_blocks):
 
-		means_water[i] = np.mean(density_dat_water[i*int(num_samples/num_SE_blocks):int((i+1)*num_samples/num_SE_blocks),:], axis=0)
-		means_hexane[i] = np.mean(density_dat_hexane[i*int(num_samples/num_SE_blocks):int((i+1)*num_samples/num_SE_blocks),:], axis=0)
+		average_profiles_water[i] = np.mean(density_dat_water[i*int(num_samples/num_SE_blocks):int((i+1)*num_samples/num_SE_blocks),:], axis=0)
+		average_profiles_hexane[i] = np.mean(density_dat_hexane[i*int(num_samples/num_SE_blocks):int((i+1)*num_samples/num_SE_blocks),:], axis=0)
 
-		# Normalize for bead number
-		means_water[i] = np.multiply(np.array([1/nBeads]), means_water[i])
-		means_hexane[i] = np.multiply(np.array([1/nBeads]), means_hexane[i])
-
-	SE_water = list(np.zeros(num_bins))
-	SE_hexane = list(np.zeros(num_bins))
-
-	for i in range(num_bins):
-
-		water_list = []
-		hexane_list = []
-
-		for j in range(num_SE_blocks):
-
-			water_list.append(means_water[j][i])
-			hexane_list.append(means_hexane[j][i])
-
-		SE_water[i] = stats.sem(water_list)
-		SE_hexane[i] = stats.sem(hexane_list)
-
+	# Compute bulk densities and width values for each data block
+	bulk_water_densities = list(np.zeros(num_SE_blocks))
+	bulk_hexane_densities = list(np.zeros(num_SE_blocks))
 	intrinsic_widths = list(np.zeros(num_SE_blocks))
 	thermal_widths = list(np.zeros(num_SE_blocks))
 	h_water = list(np.zeros(num_SE_blocks))
 	h_hexane = list(np.zeros(num_SE_blocks))
-	box_widths = list(np.zeros(num_SE_blocks))
 
 	for i in range(num_SE_blocks):
 
-		fit_test, cov_test = leastsq(my_residuals, par_init, args=(xdata[bulk_water_zhi_bin:bulk_hexane_zlo_bin], means_water[i][bulk_water_zhi_bin:bulk_hexane_zlo_bin], means_hexane[i][bulk_water_zhi_bin:bulk_hexane_zlo_bin], np.mean(means_water[i][bulk_water_zlo_bin:bulk_water_zhi_bin]), np.mean(means_hexane[i][bulk_hexane_zlo_bin:bulk_hexane_zhi_bin])))
+		par_init = np.array([popt_water[0], popt_hexane[0], popt_water[1]])
+		fit_test, cov_test = leastsq(my_residuals, par_init, args=(xdata[bulk_water_zhi_bin:bulk_hexane_zlo_bin], average_profiles_water[i][bulk_water_zhi_bin:bulk_hexane_zlo_bin], average_profiles_hexane[i][bulk_water_zhi_bin:bulk_hexane_zlo_bin], np.mean(average_profiles_water[i][bulk_water_zlo_bin:bulk_water_zhi_bin]), np.mean(average_profiles_hexane[i][bulk_hexane_zlo_bin:bulk_hexane_zhi_bin])))
 
+		bulk_water_densities[i] = np.mean(average_profiles_water[i][bulk_water_zlo_bin:bulk_water_zhi_bin])
+		bulk_hexane_densities[i] = np.mean(average_profiles_hexane[i][bulk_hexane_zlo_bin:bulk_hexane_zhi_bin])
 		intrinsic_widths[i] = box_len_av*(fit_test[1] - fit_test[0])
 		thermal_widths[i] = box_len_av*fit_test[2]
-
-		# For plotting
 		h_water[i] = fit_test[0]
 		h_hexane[i] = fit_test[1]
-		box_widths = fit_test[2]
 
-
+	print('bulk water density:  '+str(np.mean(bulk_water_densities))+'  +/- '+str(stats.sem(bulk_water_densities)))
+	print('bulk hexane density:  '+str(np.mean(bulk_hexane_densities))+'  +/- '+str(stats.sem(bulk_hexane_densities)))
 	print('intrinsic width:  '+str(np.mean(intrinsic_widths))+'  +/- '+str(stats.sem(intrinsic_widths)))
 	print('thermal width:  '+str(np.mean(thermal_widths))+'  +/- '+str(stats.sem(thermal_widths)))
 
 
-	# Plot the data
-	plt.plot(xdata, ydata_water, label='water data')
-	plt.plot(xdata, ydata_hexane, label='hexane data')
 
-	# # Plot the curve individual fits
-	# plt.plot(xdata, rho_W(xdata, *popt_water), 'g--', label='fit: water')
-	# plt.plot(xdata, rho_H(xdata, *popt_hexane), 'r--', label='fit: hexane')
 
-	# # Plot the curve fits from simultaneous fit 
-	# plt.plot(xdata, rho_W(xdata, fit_total[0], fit_total[2]), 'g--', label='fit: water')
-	# plt.plot(xdata, rho_H(xdata, fit_total[1], fit_total[2]), 'r--', label='fit: hexane')
 
-	# Plot the curve fits from the block averaged simultaneous fits
-	plt.plot(xdata, rho_W(xdata, np.mean(h_water), np.mean(box_widths)), 'g--', label='fit: water')
-	plt.plot(xdata, rho_H(xdata, np.mean(h_hexane), np.mean(box_widths)), 'r--', label='fit: hexane')
+	#################################### Block Averaging ############################################
+	# # Discover the right block size
+	# SE_values = []
 
-	# Plot the standard error measurements
-	for i in range(num_bins):
-		plt.fill_between(xdata, ydata_water - SE_water, ydata_water + SE_water,color='violet',alpha=0.5)
+	# for b in range(1000):
 
-	for i in range(num_bins):
-		plt.fill_between(xdata, ydata_hexane - SE_hexane, ydata_hexane + SE_hexane,color='violet',alpha=0.5)
+	# 	print(b+1)
+
+	# 	num_SE_blocks = float(num_samples)/float(b+1)
+	# 	num_SE_blocks = int(num_SE_blocks)
+
+	# 	# Split the data into the scpecified number of blocks and compute average profiles
+	# 	average_profiles_water = list(np.zeros(num_SE_blocks))
+	# 	average_profiles_hexane = list(np.zeros(num_SE_blocks))
+
+	# 	for i in range(num_SE_blocks):
+
+	# 		average_profiles_water[i] = np.mean(density_dat_water[i*int(num_samples/num_SE_blocks):int((i+1)*num_samples/num_SE_blocks),:], axis=0)
+	# 		average_profiles_hexane[i] = np.mean(density_dat_hexane[i*int(num_samples/num_SE_blocks):int((i+1)*num_samples/num_SE_blocks),:], axis=0)
+
+	# 	# Compute bulk densities and width values for each data block
+	# 	bulk_water_densities = list(np.zeros(num_SE_blocks))
+	# 	bulk_hexane_densities = list(np.zeros(num_SE_blocks))
+	# 	intrinsic_widths = list(np.zeros(num_SE_blocks))
+	# 	thermal_widths = list(np.zeros(num_SE_blocks))
+	# 	h_water = list(np.zeros(num_SE_blocks))
+	# 	h_hexane = list(np.zeros(num_SE_blocks))
+
+	# 	for i in range(num_SE_blocks):
+
+	# 		par_init = np.array([popt_water[0], popt_hexane[0], popt_water[1]])
+	# 		fit_test, cov_test = leastsq(my_residuals, par_init, args=(xdata[bulk_water_zhi_bin:bulk_hexane_zlo_bin], average_profiles_water[i][bulk_water_zhi_bin:bulk_hexane_zlo_bin], average_profiles_hexane[i][bulk_water_zhi_bin:bulk_hexane_zlo_bin], np.mean(average_profiles_water[i][bulk_water_zlo_bin:bulk_water_zhi_bin]), np.mean(average_profiles_hexane[i][bulk_hexane_zlo_bin:bulk_hexane_zhi_bin])))
+
+	# 		bulk_water_densities[i] = np.mean(average_profiles_water[i][bulk_water_zlo_bin:bulk_water_zhi_bin])
+	# 		bulk_hexane_densities[i] = np.mean(average_profiles_hexane[i][bulk_hexane_zlo_bin:bulk_hexane_zhi_bin])
+	# 		intrinsic_widths[i] = box_len_av*(fit_test[1] - fit_test[0])
+	# 		thermal_widths[i] = box_len_av*fit_test[2]
+	# 		h_water[i] = fit_test[0]
+	# 		h_hexane[i] = fit_test[1]
+
+	# 	SE_values.append(list([b/2, stats.sem(bulk_water_densities), stats.sem(bulk_hexane_densities), stats.sem(intrinsic_widths), stats.sem(thermal_widths)]))
+
+	# SE_values = np.asarray(SE_values)
+	# plt.subplot(2, 1, 1)
+	# plt.plot(SE_values[:, 0], SE_values[:, 1], 'bo', label='Block Averaging', markersize=2)
+	# plt.ylabel('Water Density SE (g/${cm}^3$)')
+	# plt.title('Block Averaging Analysis')
+	# plt.subplot(2, 1, 2)
+	# plt.plot(SE_values[:, 0], SE_values[:, 2], 'bo', label='Block Averaging', markersize=2)
+	# plt.ylabel('Hexane Density SE (g/${cm}^3$)')
+	# plt.subplots_adjust(left=0.2)
+	# plt.xlabel('Block size (ps)')
+	# plt.savefig('density_profile_block_averaging_1_'+filename+'.png')
+
+	# plt.clf()
+	# plt.cla()
+
+	# plt.subplot(2, 1, 1)
+	# plt.plot(SE_values[:, 0], SE_values[:, 3], 'bo', label='Block Averaging', markersize=2)
+	# plt.ylabel('Intrinsic Width SE ($\AA$)')
+	# plt.title('Block Averaging Analysis')
+	# plt.subplot(2, 1, 2)
+	# plt.plot(SE_values[:, 0], SE_values[:, 4], 'bo', label='Block Averaging', markersize=2)
+	# plt.ylabel('Thermal Width SE ($\AA$)')
+	# plt.xlabel('Block size (ps)')
+	# plt.savefig('density_profile_block_averaging_2_'+filename+'.png')
+
+	#################################### PLOTTING ############################################
+	# # Compute SE measurements for the density profiles for plotting
+	# SE_water = list(np.zeros(num_bins))
+	# SE_hexane = list(np.zeros(num_bins))
+
+	# for i in range(num_bins):
+
+	# 	water_list = []
+	# 	hexane_list = []
+
+	# 	for j in range(num_SE_blocks):
+
+	# 		water_list.append(average_profiles_water[j][i])
+	# 		hexane_list.append(average_profiles_hexane[j][i])
+
+	# 	SE_water[i] = stats.sem(water_list)
+	# 	SE_hexane[i] = stats.sem(hexane_list)
+
+	# # Plot the data
+	# plt.plot(xdata, ydata_water, label='water data')
+	# plt.plot(xdata, ydata_hexane, label='hexane data')
+
+	# # Plot the curve fits from the block averaged simultaneous fits
+	# plt.plot(xdata, rho_W(xdata, np.mean(h_water), np.mean(thermal_widths)/box_len_av), 'g--', label='fit: water')
+	# plt.plot(xdata, rho_H(xdata, np.mean(h_hexane), np.mean(thermal_widths)/box_len_av), 'r--', label='fit: hexane')
+
+	# # Plot the standard error measurements
+	# for i in range(num_bins):
+	# 	plt.fill_between(xdata, ydata_water - SE_water, ydata_water + SE_water,color='violet',alpha=0.5)
+
+	# for i in range(num_bins):
+	# 	plt.fill_between(xdata, ydata_hexane - SE_hexane, ydata_hexane + SE_hexane,color='violet',alpha=0.5)
 		
-	# Plot labels
-	plt.xlabel('Box length in z-direction')
-	plt.ylabel('Density (g/${cm}^3$)')
-	plt.legend()
-	plt.title('Density profile')
-	plt.savefig('interface_density_profile_'+filename+'.png')
+	# # Plot labels
+	# plt.xlabel('Box length in z-direction')
+	# plt.ylabel('Density (g/${cm}^3$)')
+	# plt.legend()
+	# plt.title('Density profile')
+	# plt.savefig('interface_density_profile_'+filename+'.png')
+
 
 def main(argv):
 

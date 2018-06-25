@@ -162,8 +162,8 @@ def process_datafile(files, options):
 		# Load restart file
 		state.readConfig.loadFile(files['restart_file'])
 
-		# Iterate to the first configuration
-		state.readConfig.next()
+		# Iterate to the last (most recent) configuration in the xml file
+		state.readConfig.prev()
 
 		# Add fixes 
 		ljcut = FixLJCut(state, 'ljcut')
@@ -258,18 +258,16 @@ def process_datafile(files, options):
 		# Initialize a path integral simulation if specified 
 		if PI:
 			state.nPerRingPoly = nBeads
-			state.preparePIMD(the_temp)
 
 		# Record trajectory if specified
 		if record_traj:
 			writeconfig = WriteConfig(state, handle='writer', fn=filename, writeEvery=trajFreq, format='xyz')
 			state.activateWriteConfig(writeconfig)
-			# Write the first configuration
-			writeconfig.write()
+			
 
 		# Record restart xml files if specified
 		if record_restart:
-			writeRestart = WriteConfig(state, handle='restart', fn=filename+str('*'), format='xml', writeEvery=restartFreq)
+			writeRestart = WriteConfig(state, handle='restart', fn=filename, format='xml', writeEvery=restartFreq)
 			state.activateWriteConfig(writeRestart)
 
 		# Add the integrator
@@ -313,6 +311,13 @@ def process_datafile(files, options):
 				output.write(str(tensors[1]) + '\t')
 				output.write(str(tensors[2]) + '\n')
 			output.close()
+
+		# Write final configurations
+		if record_traj:
+			writeconfig.write()
+
+		if record_restart:
+			writeRestart.write()
 
 		exit()
 
@@ -684,12 +689,10 @@ def process_datafile(files, options):
 	if record_traj:
 		writeconfig = WriteConfig(state, handle='writer', fn=filename, writeEvery=trajFreq, format='xyz')
 		state.activateWriteConfig(writeconfig)
-		# Write the first configuration
-		writeconfig.write()
 
 	# Record restart xml files if specified
 	if record_restart:
-		writeRestart = WriteConfig(state, handle='restart', fn=filename+str('*'), format='xml', writeEvery=restartFreq)
+		writeRestart = WriteConfig(state, handle='restart', fn=filename, format='xml', writeEvery=restartFreq)
 		state.activateWriteConfig(writeRestart)
 
 	# Add the integrator
@@ -733,6 +736,13 @@ def process_datafile(files, options):
 			output.write(str(tensors[1]) + '\t')
 			output.write(str(tensors[2]) + '\n')
 		output.close()
+
+	# Write final configurations
+	if record_traj:
+		writeconfig.write()
+
+	if record_restart:
+		writeRestart.write()
 
 	exit()
 

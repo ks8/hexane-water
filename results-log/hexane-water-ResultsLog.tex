@@ -698,11 +698,1020 @@ This also matches with Patel:
 
 \begin{enumerate}
 \item Trajectory data for interface\_NVT.py is contained in interface-NVT.xyz.  
-\item The first thing we want to do is to construct a production run dataset that has path integrals.  We used interface\_new.py and run\_new.sh to perform a 400,000 step (i.e. 200 ps) equilibration in NPT using the standard parameters.  Now, we will restart that simulation, except we will use path integral beads.  As proof of concept, we will start with just a few, say 16 beads.  
+\item The first thing we want to do is to construct a production run dataset that has path integrals.  We used interface\_new.py and run\_new.sh to perform a 400,000 step (i.e. 200 ps) equilibration in NPT using the standard parameters.  Now, we will restart that simulation, except we will use path integral beads.  As proof of concept, we will start with just a few, say 16 beads.  The DASH script will be called interface\_restart\_new.py, and the sbatch will be run\_restart\_new.py.  The restart input file will be equilibration400000.xml.  
+\item Ok, it appears as though restart works perfectly fine using path integrals.  Setting number of beads to 16 and doing a run of 200,000 steps, i.e. 100 ps, under NVT conditions.  We will use this to generate a preliminary dataset.  
+\end{enumerate}
+
+\section{4/25/2018}
+
+\begin{enumerate}
+\item Based on Patel and Brooks (2006) and the sources they cite, the interfacial tension can be computed as 
+
+\begin{align}
+\begin{split}
+\gamma = \frac{L_{zz}}{2}\left[\left<P_{zz}\right> - \frac{1}{2}\left(\left<P_{xx}\right> + \left<P_{yy}\right>\right)\right], 
+\end{split}
+\end{align}
+where $P_{\alpha\beta}$ are computed from the standard definition of the atomic virial.  From Tildesley's computer simulation of liquids, this is defined as:
+
+\begin{align}
+\begin{split}
+P_{\text{instantaneous}} = \rho k_B T + W/V, 
+\end{split}
+\end{align}
+
+where $W$ can be written as:
+
+\begin{align}
+\begin{split}
+W = -\frac{1}{3}\sum_i\sum_{j > i}\textbf{r}_{ij}\cdot \textbf{f}_{ij} = -\frac{1}{3}\sum_i\sum_{j > i}w(r_{ij}) \\
+w(r) = r\frac{dv(r)}{dr}.  
+\end{split}
+\end{align}
+
+In "Molecular dynamics simluation of the orthobaric densities and surface tension of water", by Alejandre, Tildesley, and Chapela, the authors note the following.  Similar to the above definition of the pressure tensor elements and atomic virial, the elements $\alpha\beta$ of the molecular pressure tensor can be written as:
+
+\begin{align}
+\begin{split}
+VP_{\alpha\beta} = \sum_{i = 1}^Nm_i(\textbf{v}_i)_\alpha(\textbf{v}_i)_\beta + \sum_{i = 1}^{N - 1}\sum_{j > i}^N\sum_a\sum_b(\textbf{r}_{ij})_\alpha(\textbf{f}_{iajb})_\beta, 
+\end{split}
+\end{align}
+
+where N is the number of molecules, V is the volume, $m_i$ and $\textbf{v}_i$ are the molecular mass and velocity of the center of mass, respectively, $\textbf{r}_{ij}$ is the vector between the center of mass of molecules $i$ and $j$ and $\textbf{f}_{iajb} = -\frac{\textbf{r}_{iajb}}{r_{iajb}}\left[\frac{dU(r_{iajb})}{dr_{iajb}}\right]$ is the force between atom $a$ in molecule $i$ and atom $b$ in molecule $j$.  The distance betwen atom $a$ in molecule $i$ and atom $b$ in molecule $j$ is denoted by $r_{iajb}$.  
+
+Although the above definitions used molecular center of mass for calculations, J. G. Harris J. Phys. Chem. 1992 notes that the virial can be calculated using both the molecular and atomic routes.  "Although both the molecular and atomic formulas for the surafce tension should produce equivalent ensemble averages, the instantaneous values and magnitude of flucutations can differ significantly.  The atomic and molecular virial formula do yield different values for the individual $V_{\alpha\alpha}$.  In computing the pressure tensors [however], this difference is offset by the differences in the atmoic and molecular kinetic terms."  \\
+
+The Tildesley paper goes on to note that "The definition of the molecular pressure tensor in Eqn. (4) is only valid for additive potentials and the calculation of $\textbf{f}_{iajb}$ and hence $P_{\alpha\beta}$ is in general simple.  The constraint forces and the forces arising from bond-angle distortions make no contribution to the molecular pressure tensor.  In the case of the electrostatic interactions treated with the Ewald sum, there are two contributions to the potential, one in the real space (which is pairwise-additive) and other in the reciprocal space (which is not).  In the latter case Eq. (4) is not applicable and the appropriate expression is given in Appendix A."\\
+
+However, after talking to Dan and Brian, we realize that the pressure tensor elements can be computed directly in DASH during a simulation, and that these elements appropriately account for long-range electrostatic contributions from the Ewald method.  
+
+\item So, now we will create a new simulation, that starts from the 400,000 step equilibration and computes pressures directly every 1000 steps.  We will start with interface\_restart\_new.py, comment out the path integral stuff, and then add pressure tensor computations.
+
+\item Wrote tension\_analysis.py to evaluate the interfacial tension.  Getting values around 200 or 300 mN/m though, so not sure what is going on here.  Will have to evaluate further at another time.  
+
+\item Running PI-1, which is 200,000 steps (100 ps) under NVT conditions but only 1 bead this time.  We will use this information to compare results and see if there is any differences!!  
+
+\item Here are the results for 200,000 NVT steps after the 400,000 NPT equilibration with 1 bead:
+\subitem Bulk water density: 0.999555449512 $g/cm^3$
+\subitem Bulk hexane density: 0.668818766515 $g/cm^3$
+\subitem Intrinsic width: 0.735859948359 Angstroms
+\subitem Water thermal width: 1.78265926051 Angstroms
+\subitem Hexane thermal width: 1.73435836695 Angstroms
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{interface_density_profile_PI-1}
+\end{figure}
+
+\section{4/26/2018}
+
+\begin{enumerate}
+\item Here are the results for 200,000 NVT steps after the 400,000 NPT equilibration with 16 beads:
+\subitem Bulk water density: 1.00165502632 $g/cm^3$
+\subitem Bulk hexane density: 0.665009086668 $g/cm^3$
+\subitem Intrinsic width: 0.694754973486 Angstroms
+\subitem Water thermal width: 1.56257576587 Angstroms
+\subitem Hexane thermal width: 1.49811476734 Angstroms
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{interface_density_profile_PI-16}
+\end{figure}
+
+\item Surace tension def'n:   
+
 \end{enumerate}
 
 
 
+\section{4/30/2018}
+
+\begin{enumerate}
+\item Removing an error pointed out by Mike in the PIMD code.  Instructions from Mike: open up IntegratorVerlet.cu, remove lines 137 and 138, because reduceByN is redundant.  Doing this in the NEW\_DASH file.  
+\item Modified interface\_restart\_new.py such that there are 16 beads and no pressure tensor computations.  We will run this through run\_restart\_new.sh to check if the modification to the PIMD code messed anything up.  File will be PIMD-test.  10,000 steps. 
+\item How to compute statistical uncertainty in measurements?
+\item Also forgot to log this, but Dan made a fix to the pressure tensor recording, in src/DataStorageUser/DataComputer/pressure.cu, issue with converting C++ to python list or something.  This was also compiled earlier.  
+\item Realized I did not compile the Mike fix, so compiling then checking again.  
+\item Still, everything looks fine.  
+\item Mike found another error in src/GridGPU.cu.  The line wrapping centroids was missing from part of the code.  
+\end{enumerate}
+
+\section{5/1/2018}
+
+\begin{enumerate}
+\item First, we will set up a rigorous simulation of the classical system.  We will do this by looking at the 400,000 NPT equilibration steps in the file equilibration.xyz, which is the system we have been taking restart trajectories from.  We will first plot the box volume to see how it varies over time.  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{NPTvolumes}
+\end{figure}
+
+\item It is clear that the box volume equilibrates after 300,000 timesteps.  So, we will check the average box dimensions in the last 50 ps of the simulation:  
+\subitem Average x-length: 48.80
+\subitem Average y-length: 48.99
+\subitem Average z-length: 91.23
+
+\item The restart file we are using, equilibration400000.xml, gives the following box length values:
+
+\subitem Restart x-length: 48.85
+\subitem Restart y-length: 49.04
+\subitem Restart z-length: 91.32
+
+\item Let's see if we can adjust the starting volume at all.  Increased the bounds\_xlo by 0.05, increased the bounds\_ylo by 0.05, and increased the bounds\_zlo by 0.09 in order to change box side lengths to average values.  Simulation appears to be running.  SO, we will now run the restart classical 0 beads simulation NVT.  Filename "trueNVT", 2,000,000 steps.  With the changed initial bounds.  This is running now.
+\item Now going into run\_new.sh and interface\_new.py files.  We are going to try running a 1 bead simulation, STARTING from NVT conditions.  We will run this for 1,000,000 timesteps and see what happens, i.e. check if the system equilibrates or not.  This is running now.
+
+\end{enumerate}
+
+\section{5/2/2018}
+
+\begin{enumerate}
+\item We ran a 1 bead NVT simulation for 1,000,000 timesteps, where we subtracted and added 20 Angstroms from the z lo and z hi dimensions, respectively.  The DASH script was named interface\_new\_NVT.py  Here is an image of the final configuration:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{wide-NVT-1bead}
+\end{figure}
+
+\item It looks possibly reasonable.  We also ran a 1 bead NVT simulation for 1,000,000 timesteps with the minimal box volume.  Here is an image of the final configuration:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{original-NVT}
+\end{figure}
+
+\item So, it looks like providing extra space is important...
+
+\item Ok, so based on this, let's do three more simulations.  The first will be similar to what we just did with the extra space, but with 16 beads as well as 32 beads.  
+\item Changed interface\_new\_NVT.py to have 16 beads.  Using run\_new.sh to do the NVT equilibration simulation for 1,000,000 steps with files named NVTequil-16bead.
+\item The second is: creating a new file named interface\_new\_NVT32.py which will have 32 beads.  Doing the same as above, file named NVTequil-32bead.  This has been submitted to run.  
+\item The third will be to restart from the apparently successful simulation with 1 bead with the expanded NVT volume.  We will use the restart file NVTequil-1bead-new990000.xml.   The filename will be NVTprod-1bead.  We will do 2,000,000 production steps, i.e. 1 ns.  This has been submitted to run.
+
+ 
+
+\end{enumerate}
+
+\section{5/3/2018}
+
+\begin{enumerate}
+\item Did density\_profile\_postproduction.py on the bigmem partition for the trueNVT 2,000,000 classical steps.  Needed more memory.  Ok, now we will download densities\_water\_trueNVT.txt and hexane equivalent to laptop to perform analysis.   
+\item We will again use density\_profile\_postproduction.py on bigmem for NVTprod-1bead.xyz data to get density profile info.  Files called densities\_water\_NVTprod-1bead.txt.
+\item Now, we are going to use the restart file NVTequil-32bead-990000.xml.  The filename will be NVTprod-32bead.  We will again do 2,000,000 production steps, i.e. 1 ns.  
+\item Problems with the restart file.  So, we will run simulations that include both equilibration and production steps.  In other words, we will run NVTequil-16bead-long and NVTequil-32bead-long, which will each be run for 3,000,000 steps!  dayum.  Both running now.
+\end{enumerate}
+
+
+\section{5/4/2018}
+
+\begin{enumerate}
+\item 1.  We ran an NVT classical 2,000,000 timestep simulation restarting from the NPT equilibration run with the box dimensions adjusted so that the reflect the average equilibrated volume (see above).  We then ran density\_profile\_postproduction.py on bigmem to produce the files densities\_water\_trueNVT.txt and densities\_hexane\_trueNVT.txt, which we downloaded to laptop.  We then used density\_profile\_analysis.py to analyze these profiles.  Similar to previous analysis, we assumed that the water bulk was 0.1 < z < 0.4 and the hexane bulk was 0.6 < z < 0.85.  This time, we have the exact box length in the z direction, 91.234905 Angstroms.  Using the entirety of the available data, and the computed bulk water and hexane densities, we performed separate fits of water and hexane density profiles to obtain a "total intrinsic width" and a "total thermal width."   We then added functionality to perform a simultaneous fitting, which uses the individual fits to provide initial estimates for the Gibbs dividing surfaces of hexane and water as well as the water width as an estimate for the joint thermal width.  It also uses the bulk densities as hard-coded values.  The simultaneous fitting then performs a least squares optimization to give the total width values, which are close to the original individual fits.  Finally, we compute the "intrinsic width" and the "thermal width."  We split the data into 5 sections, i.e. 5 200 ps intervals.  For each block, we compute the simultaneous fitting of the intrinsic and thermal widths, using the average density values from that specific block.  We then report the mean of these fits as well as the standard error of the mean for these fits, which we report below.  Finally, SE of the mean density profiles across the 200 slabs are also shown in the plot in purple.   
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 1.00047355545 \\
+\text{bulk hexane density: } 0.672799468906 \\
+\text{separate fitting intrinsic width: } 0.588579658835 \\
+\text{water thermal width: } 1.64305504711 \\
+\text{hexane thermal width: } 1.58958186287 \\
+\text{total intrinsic width: } 0.587937486508 \\
+\text{total thermal width: } 1.62624544958 \\
+\text{block-averaged intrinsic width: } 0.61996503417 \pm 0.0132678744671 \\
+\text{block-averaged thermal width: } 1.37899476187 \pm 0.0323005854543 \\
+\end{split}
+\end{align} 
+
+Here is the plot for individual fits using the entire data at once (NOTE THAT THE X-AXIS HAS WRONG LABEL):
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_individualfit_trueNVT}
+\end{figure}
+
+Here is the plot for simultaneous fit using the entire data at once:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_simultaneousfit_trueNVT}
+\end{figure}
+
+Here is the plot for simultaneous fit using block averaging technique (i.e. parameters are averages of simultaneous fits from the 5 blocks): 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_blockfit_trueNVT}
+\end{figure}
+
+Issues to note here are that the total width values do not fall within the SE estimate for the widths, which might indicate that the block size or number of blocks is erroneous.  Also, the width values are interesting, thermal width seems small.  \\
+
+We also analyzed the pressure tensor file, pressure\_tensorstrueNVT.txt, and it gave an average interfacial tension of  77.43.  Well, this is quite off, but at least the larger tension is related to a smaller interfacial width...
+
+\item 2.  We are now going to check the results from the following: equilibration using an EXPANDED box, i.e. equilibration in NVT for 1,000,000 timesteps, followed by 2,000,000 NVT production steps using a restart file (which apparently works for 1 bead).  We have used density\_profile\_postproduction.py on bigmem for NVTprod-1bead.xyz data to get density information, which we downloaded.  The files are called densities\_water\_NVTprod-1bead.txt and densities\_hexane\_NVTprod-1bead.txt.  We will now use density\_profile\_analysis.py to produce results on these and compare with the NPT-NVT classical result.  \\
+
+Here is the plot of the density profiles:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_NVTprod-1bead}
+\end{figure}
+
+Based on this plot, we will estimate that the bulk water region is in 0.3 < z < 0.4, the interfacial region is 0.4 < z < 0.55, and the bulk hexane region is 0.55 < z < 0.62.  So, we will change the code to reflect this.  The x length is 58.45467 Angstroms, y length is 58.67825, and z length is 149.2717, based on NVTprod-1bead.xyz. \\
+
+Using the same scheme as above, 
+
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.995053633154 \\
+\text{bulk hexane density: } 0.656798321085 \\
+\text{separate fitting intrinsic width: } 0.649275263102 \\
+\text{water thermal width: } 1.61254923014 \\
+\text{hexane thermal width: } 1.57211041522 \\
+\text{total intrinsic width: } 0.64913333243 \\
+\text{total thermal width: } 1.60032720938 \\
+\text{block-averaged intrinsic width: } 0.655975139284 \pm 0.0068168498649 \\
+\text{block-averaged thermal width: } 1.53323689614 \pm 0.047053357657 \\
+\end{split}
+\end{align} 
+
+Here are the individual, simultaneous total, and simultaneous block-averaged plots, respectively: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_individualfit_NVTprod-1bead}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_simultaneousfit_NVTprod-1bead}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_blockfit_NVTprod-1bead}
+\end{figure}
+
+So, this is interesting.  Everything looks decent.  \\
+
+In fact, the interfacial tension is also reduced, which makes sense with the increased block-averaged thermal width.  The average interfacial tension is 57.2929893303.  
+
+Let's now do the same analysis for the 16 bead and 32 bead versions.
+
+\item Using density\_analysis.sbatch and density\_profile\_postproduction\_PI.py adjusted for 16 beads and the 3,000,000 full NVT data from NVTequil-16bead-long.xyz, we will again perform the postproduction stuff to get densities\_water\_NVTequil-16bead-long.txt etc.  
+
+\item Realized that the 16 bead and 32 bead long simulations did not finish, since their wall time given was only 24 hours.  We really do need 2000 points of production data, though, so I am changing the DASH script to record the trajectory every 1,000 steps instead of 10,000, as well as increasing the wall time on the sbatch script.  These files are waiting to run.  Because there is buildup of stuff on DASH, we will create a new file interface\_new\_NVT32.py that has the 32 beads.  
+
+\end{enumerate}
+
+\section{5/13/2018}
+
+\begin{enumerate}
+\item NVTequil-16bead-long finished running, so we are now using density\_analysis.sbatch and density\_profile\_postproduction\_PI.py to create the density profiles for the simulation, after the initial 1 million timesteps of equilibration time.  So, this will give us 2000 (for 2 million production) steps, as we skip over the first 1000.  
+\end{enumerate}
+
+\section{5/14/2018}
+
+\begin{enumerate}
+\item The above didn't work because it is killed for having too much memory.  We need to read this large file, NVTequil-16-bead-long.xyz, line by line.  So, wrote a python script that does this, called density\_profile\_postproduction\_PI\_largefile.py.  It is intended to skip over the first 1000 recordings of trajectory in order to get to the relevant 2000 production steps.  This is running right now on depablo node.  Before we run 32 bead, let's see if this starts recording density properly.  
+\item Created a file density\_profile\_postproduction\_PI\_largefile32.py for the 32 bead version.  Running now.  
+\end{enumerate}
+
+\section{5/15/2018}
+\begin{enumerate}
+\item The 16 bead analysis has gotten through nearly 700,000 steps out of 2 million in nearly 24 hours of running.  So, let's take a look at what we have so far.  We can restart the analysis once this program runs out of time.  But for the time being, let's see. 
+\item Downloaded densities\_water\_NVTequil-16bead-long.txt into the interface folder on laptop.  
+\item Modifying density\_profile\_analysis.py so that we can use it for multiple beads.  The z box length is the same as in the 1 bead case, i.e. 149.2717.   
+\item Based on the 693 samples available, we have:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.990280242489 \\
+\text{bulk hexane density: } 0.636235151094 \\
+\text{separate fitting intrinsic width: } 0.673772951396 \\
+\text{water thermal width: } 1.54419798147 \\
+\text{hexane thermal width: } 1.47236899979 \\
+\text{total intrinsic width: } 0.672263134573 \\
+\text{total thermal width: } 1.52334249168 \\
+\text{block-averaged intrinsic width: } 0.6770006123 \pm 0.00903193146811\\
+\text{block-averaged thermal width: } 1.45879406506 \pm 0.0427265671493 \\
+\end{split}
+\end{align} 
+
+Here are the individual, simultaneous total, and simultaneous block-averaged plots, respectively: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_individualfit_NVTequil-16bead-long-noSE}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_individualfit_NVTequil-16bead-long}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_simultaneousfit_NVTequil-16bead-long-noSE}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_simultaneousfit_NVTequil-16bead-long}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_blockfit_NVTequil-16bead-long-noSE}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_blockfit_NVTequil-16bead-long}
+\end{figure}
+
+\item Not sure what's going on with the crazy SE or why the total thermal width and block-averaged thermal widths are completely different.  Must have to do with the block size and with the bin size, on both counts. 
+
+\item Here are the results for 32 beads:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.990991742448 \\
+\text{bulk hexane density: } 0.635954610345 \\
+\text{separate fitting intrinsic width: } 0.676349534146 \\
+\text{water thermal width: } 1.56571216603 \\
+\text{hexane thermal width: } 1.4629537973 \\
+\text{total intrinsic width: } 0.67576621799 \\
+\text{total thermal width: } 1.53634155284 \\
+\text{block-averaged intrinsic width: } 0.685151996303 \pm 0.0153423232413\\
+\text{block-averaged thermal width: } 1.50655274353 \pm 0.0731023126283 \\
+\end{split}
+\end{align} 
+
+
+
+Here are the individual, simultaneous total, and simultaneous block-averaged plots, respectively: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_individualfit_NVTequil-32bead-long-noSE}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_individualfit_NVTequil-32bead-long}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_simultaneousfit_NVTequil-32bead-long-noSE}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_simultaneousfit_NVTequil-32bead-long}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_blockfit_NVTequil-32bead-long-noSE}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_blockfit_NVTequil-32bead-long}
+\end{figure}
+
+\end{enumerate}
+
+\section{5/16/2018}
+\begin{enumerate}
+\item We failed to record interfacial tension for the 16 and 32 bead examples.  Must incorporate that next time.  
+\item First, since we have remaining data sitting there, we should finish collecting all of this data.  The file, densities\_water\_NVTequil-16bead-long.txt has 741 entries.  This means that 
+\item Markland group: MD code for path integrals, on graphis cards, OpenMM.  Download this and run it.  See how it compares to what we have.  Compare with 1000 water molecules.  Raman spectra using some of these models.  Once we validate, we want to do this.  
+\end{enumerate}
+
+\section{5/21/2018}
+\begin{enumerate}
+\item First we are going to clean up the code.  
+\end{enumerate}
+
+\section{5/25/2018}
+\begin{enumerate}
+\item To Do:
+\subitem RDFs for water and hexane
+\subitem Attempt Nose Hoover barostat for density benchmarking under NPT conditions 
+\subitem Finish cleaning up existing code
+\subitem Modify density profile post production large file so that we use readline instead of readlines, and so that we do the analysis one frame at a time.  For a given frame, save the information in some numpy array and then do the analysis, then move on to the next frame.  If this doens't work, then just split up the traj file and do it in parallel.  
+\subitem For the standard error, split into the 5 subtrajectories and plot each of the subtrajectories, to see if the density profile actually moves around.  If so, then we need to normalize/center the bins so that our analysis is ok.  Also, the bin width is on the order of the value of the interfacial profile, so we need more/smaller bins in order to capture this stuff appropriately.  
+\subitem Use OpenMM to benchmark our DASH code.  Read Markland papers.
+\end{enumerate}
+
+\section{5/27/2018}
+\begin{enumerate}
+\item We are currently testing density\_profile\_analysis\_UPDATE.py.  We will test its ability using the files densities\_water\_NVTequil-16bead-long.txt and the corresponding hexane one.  
+\item We are also investigating the issue with standard error.  We split the data into two segments for the SE calculation, so that we have means\_water[0] and means\_water[1].  We first find that the SE calculation has not been normalizing number of beads.  So, we do that.  Then, we notice that there is a shift by one bin in the location of the profile.  We print out, for means 0 and means 1, the value of the mean for each of the 200 bins side by side.  
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_binshift}
+\end{figure}
+\item Nevertheless, even with this slight shift, we find that normalizing for beads fixes the SE problem.  
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_beadnorm}
+\end{figure}
+\item Now, we will create density\_profile\_postproduction\_PI\_largefile\_UPDATE.py to analyze NVTprod-1bead.xyz as a test.  
+\end{enumerate}
+
+\section{5/28/2018}
+\begin{enumerate}
+\item We have created density\_profile\_postproduction\_PI\_largefile\_UPDATE.py and began to analyze NVTprod-1bead.xyz successfully.  However, we should make sure we can do a complete file successfully, and we don't want to wait for this one to finish.  So, let's create some test trajectory files, with 1, 16, and 32 beads, and 10 frames, to check that the analysis is done appropriately.  
+\item Significantly sped up system by using the readline() format and by using np.digitize() for the histogram computation.
+\item Now, we will use this program to analyze NVTequil-16bead-long.xyz, hopefully getting the FULL trajectory this time!  Uploaded density\_profile\_postproduction\_PI\_largefile\_UPDATE.py to midway.
+\item Seems to work on Midway.  So, we are going to do the following.  We will use this script to collect density profiles from NVTequil-16bead-long.xyz and NVTequil-32bead-long.xyz.  The density text files will have the file name NVTequil-16bead-long-FULL, and the same for 32 beads.  We run these from density\_analysis.sbatch.    
+\item Something else we want to check is what happens when we increase the number of bins from 200.  Because we want our error to be small enough relative to the intrinsic width. So, perhaps we want an order of magnitude larger number of bins.  
+\end{enumerate}
+
+\section{6/1/2018}
+\begin{enumerate}
+\item Full collection of density profiles took less than 24 hours, so we now have completed files densities\_water\_NVTequil-16bead-long-FULL.txt and densities\_hexane\_NVTequil-16bead-long-FULL.txt.  We will first download these onto laptop.  
+\item Now we will use density\_profile\_analysis\_UPDATE.py to analyze these profiles, taking care to remove the first ns of profile data, which is the equilibration period.  The z box length is the same as before, 149.2717.  So, we use the second two ns of data, from indix 1000 to 3000.  The analysis reveals the following: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.995624283643 \\
+\text{bulk hexane density: } 0.638737730535 \\
+\text{separate fitting intrinsic width: } 0.646069228603 \\
+\text{water thermal width: } 1.6887345795 \\
+\text{hexane thermal width: } 1.62750350738 \\
+\text{total intrinsic width: } 0.645278775844 \\
+\text{total thermal width: } 1.67098576921 \\
+\text{block-averaged intrinsic width: } 0.657563761558 \pm 0.0175256170729\\
+\text{block-averaged thermal width: } 1.56668743686 \pm 0.0300388678349 \\
+\end{split}
+\end{align} 
+
+Here is a plot using the block-averaged fitting parameters:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_NVTequil-16bead-long-FULL}
+\end{figure}
+
+\item For the same thing above but with 32 beads, we obtain:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.997054790967 \\
+\text{bulk hexane density: } 0.632792582469 \\
+\text{separate fitting intrinsic width: } 0.610323859405 \\
+\text{water thermal width: } 1.75865687055 \\
+\text{hexane thermal width: } 1.67544835215 \\
+\text{total intrinsic width: } 0.608799880016 \\
+\text{total thermal width: } 1.73427604532 \\
+\text{block-averaged intrinsic width: } 0.626126706412 \pm 0.0217244653966\\
+\text{block-averaged thermal width: } 1.5643927083 \pm 0.0310262340524 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_NVTequil-32bead-long-FULL}
+\end{figure}
+
+
+\end{enumerate}
+
+\section{6/4/2018}
+\begin{enumerate}
+\item Looking at Mike's folder, for\_kirk\_rdf, in order to compute the RDF for TIP4P/F water.  
+\item Not sure how to use this file, so waiting for Mike to come in to deal with this.  Hopefully we can fully validate our implementation of TIP4P/F within a day or two.  
+\item For the time being, moving on to computing density profiles using a larger number of histogram bins.  We will first try 2000.  Modified density\_profile\_postproduction\_PI\_largefile\_UPDATE.py to allow for easy modifications of number of bins.  Let's now run this for our current NVTequil-16bead-long.xyz and NVTequil-32bead-long.xyz files.  The density text files will be named NVTequil-16bead-long-2000bins and NVTequil-32bead-long-2000bins, respectively.  Again, we will run these from density\_analysis.sbatch.  These are both running now.  
+\item We have not yet analyzed molecular orientation at the interface for NVTequil-16bead-long.xyz or NVTequil-32bead-long.xyz.  The python scripts that perform this analysis, molecular\_orientation\_postproduction.py and molecular\_orientation\_postproduction\_hexane.py, rely on the old way of loading .xyz files, which is not suitable for large files.  So, we are going to have to rewrite these scripts to make them suitable for large files, in a similar vein as density\_profile\_postproduction\_PI\_largefile\_UPDATE.py.  Also, we have to adapt this for multiple beads...
+\item For the time being, though, we will work with interface-dens.xyz, which according to notes from 4/17/2018: "It appears to be working.  Modified the original interface.py to reflect this, as well as customizing filename for the density files.  Currently running DASH simulation of the interface using 400,000 preequilibration steps, followed by 300,000 production steps during which density profiles are measured every 100 steps."  It appears as though there are about 620 frames in this file, and that the system equilibrates after 300,000 steps.  So, we will assume we have 300,000 equilibration and 200,000 production NPT steps using 1 bead.  
+\item Liu heavy light water notes orientation needs to be done on a per bead basis, and also that there are non substantial (but measurable?) quantum effects to interfacial H-bond network.
+\item Wrote a file, molecular\_orientation\_water\_postproduction\_UPDATE.py, which improves the file reading process as noted above.  We are going to test this on interface-dens.xyz on Midway.  If this works, we will make similar changes to allow for hexane profile analysis, and then test this for 16 beads.   Running this now using orientation\_postproduction.sbatch.  
+\item The resulting filename is orientations\_water\_interface-dens-test.xyz.  Bringing this now to laptop.  
+\item The result, tested using orientation\_profile\_analysis.py, appears to work.  So, let's now move on to the 16 bead case.  So we will us the traj file NVTequil-16bead-long.xyz.  We will call the orientation file NVTequil-16bead-long-orientations.   
+\item We will run the same thing for 32 beads, with a similar file name.  
+\item Talked to Mike about RDF stuff.  I think we have a clear read on what to do.  The first thing to do is to take the 1 bead water output file, say kirk\_tip4p\_1950000.xml and move that data into a LAMMPS file containing the relevant bond, angle, and dihedral information.  
+\item Went to lammps\_work/water on laptop and used the molecule replicator to create a file, RDF.sys.data, which I then moved to dash\_work/water.  Modified the header to have the right format of atoms, atom types, bonds, bond types, etc., and showing zero dihedrals. Working on a python script called dash\_restart\_to\_lammps\_RDF.py.    
+\end{enumerate}
+
+\section{6/5/2018}
+\begin{enumerate}
+\item For RDFs, in for\_kirk\_rdf/RDF.  ./comp\_mod cmd\_read\_subs.  then, , ./compile.sh.  
+\item MUST include total number of atoms in data file, including M site.  Finished script dash\_restart\_to\_lammps\_RDF.py.  Used this in conjunction with a 2M fs NPT output, output\_dens.xyz, to construct RDF using ./get\_rdfs 1 output\_dens.xyz RDF.tip4pF.data.txt < example\_rdf.input.  Resulting file 0\_0.rdf was analyzed in new python script in the dash\_work/water folder on laptop, called RDF\_analysis.py, which produced the following plot:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{RDF}
+\end{figure}
+\end{enumerate}
+
+\section{6/6/2018}
+\begin{enumerate}
+\item Wrote python script tip4pF\_UPDATE in dash\_work/water.  Using this to do validation of TIP4P/F in DASH.  
+\item From Markland paper: "For example, the O-O, O-H, and H-H RDFs of the two liquids were obtained from 250 ps NVT path integral simulations in the presence of an Andersen thermostat."
+\item "...and liquid densities at 1 atm pressure were obtained from 10 ns NPT simulations in order to fully converge the average over density fluctuations.  These latter simulations were performed in the presence of both an Andersen thermostat and an isotropic Berendsen barostat."  
+\item "Unless stated otherwise, all of our liquid simulations were performed at a temperature of 298K and a density of 0.997 g/cm3 with 216 water molecules in a cubic simulation box...Short-range interactions were truncated at 9 A...Thirty-two ring polymber beads were used in all simulations..Several classical simulations were also performed for comparison by collapsing the ring polymer to a single bead (n = 1)."
+\item "In all simulations, the system was equilibrated for 100 ps in the presence of an Andersen thermostat before the accumulation of any averages."    
+\end{enumerate}
+
+\section{6/7/2018}
+\begin{enumerate}
+\item First, let's set up simulations to construct RDF plots similar to Markland.  They did 100 ps NVT equilibration followed by 250 ps NVT production with 216 molecules at a density of 0.997 g/cm3 and 32 beads and at a temperature of 298K.  Short range cutoff at 9 Angstroms.  
+\item So, we will do 200,000 steps of equilibration followed by 500,000 steps of production, with 216 molecules, density of 0.997, temperature of 298.0K, short range cutoff at 9 Angstroms, and 32 beads.  Because we simply want to record the trajectories, we will only record the .xyz during production run, and we will record at a frequency of every 100 steps, which should give us 5000 frames for analysis.  General data is also recorded every 100 steps.  
+\item For 1 bead, the filename is RDF-1bead.  For 32 beads, the filename is RDF-32bead.  
+\item These finished running within the hour.  Next, we will extract the RDF information.  
+\item Copied .xyz files to for\_kirk\_rdf/RDF/tip4pF.  Also copied data\_water\_flexible.txt and lammps\_molecule\_replicator\_water.py from hexane-water/lammps\_work/water.  Went into the replicator file and set the number of molecules to 216.  Creating an output file called RDF-tip4pF.data.  
+\item Ran a very brief simulation to extract a dash restart file for 216 water molecules, file called RDF-restart0.xml.  Also brought in dash\_restart\_to\_lammps\_RDF.py.  Had to make changes to this file, because it was written using old dash restart files rather than NEW\_DASH.    
+\item Used this to create an artificial lammps file, sys.RDF-tip4pF.data.txt.  Manually rearranging the header so that we include M site in the count and that atoms, atom types, bonds, bond types etc. is the order.  
+\item To run get\_rdfs, must first module load gcc/4.9.  
+\item Saving the rdf data on laptop in hexane-water/data folder as 0\_0-1bead-tip4pF.rdf etc.  
+\item Here are the results for 1 bead:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_0-1bead-tip4pF.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_1-1bead-tip4pF.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{1_1-1bead-tip4pF.png}
+\end{figure}
+
+\item Downloading densities\_water\_NVTequil-16bead-long-2000bins.txt and the hexane equivalent to laptop.
+\item The 32 bead RDF did not work.  We need to include total number of atoms, with the discretization, in the lammps data file that we artificially create.  So, creating a new .xml output with 32 beads.  We also have to manually adjust the header, in addition to what we did before, by multiplying the atom number, bond, number, and angle number by 32, the number of beads.  
+
+
+\end{enumerate}
+
+\section{6/10/2018}
+\begin{enumerate}
+\item Now, we have the 32 bead info, which we have saved as 0\_0-32bead.rdf etc.  Here are the results for 32 beads, along with the Markland paper plots:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_0-32bead-tip4pF.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{Markland-0_0-RDF}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_1-32bead-tip4pF.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{Markland-0_1-RDF}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{1_1-32bead-tip4pF.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{Markland-1_1-RDF}
+\end{figure}
+
+\item We notice that the Markland RDF plots contain bonded species, so we will re-do O-H and H-H RDFs to include bonded and angle species.  
+\item This is running now, using run.sh on Midway 1 bigmem.    
+\item In Patel and Brooks, density values are likewise obtained for bulk NPT simulations, similar to Markland.  Patel and Brooks also say that their bulk densities are "obtained" from fits to the individual density profiles."  
+\item How do we know NVT ensemble is appropriate?  How do we know we are incorporating appropriate conditions?  How do we know densities are appropriate??
+\item If we do an NVT simulation but cannot specify an average pressure or pressure range, then how can we compare to experimental measurements of something like interfacial tension or width?  These experiments are naturally carried out at a fixed temperature and at atmospheric pressure.  But what if our NVT simulation has an average pressure that is much greater, or less than, atmospheric pressure?  How can we know to compare our results to what is effectively an NPVT system?  For example, what does density even mean in an NVT context?  I could increase V extremely large but we would still have the same density of the bulk in our simulation.  So how do we compare this experimentally?  I guess it would mean something if we KNEW what the density was.  How do I know that the density of an NVT system with too much room will equilibrate to the density at the same T and at atmospheric pressure?
+\item NICOLAS 2004 HEXANEWATER DESCRIBES DEPLETION THING  
+\item For 16 beads from NVTequil-16bead-long, and files densities\_water\_NVTequil-16bead-long-2000bins, we have:
+
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.991059863363 \\
+\text{bulk hexane density: } 0.63864891231 \\
+\text{separate fitting intrinsic width: } 0.659180420853 \\
+\text{water thermal width: } 1.67546058832 \\
+\text{hexane thermal width: } 1.62587346184 \\
+\text{total intrinsic width: } 0.658660739701 \\
+\text{total thermal width: } 1.66111444442 \\
+\text{block-averaged intrinsic width: } 0.670463724935  +/- 0.0164082418884\\
+\text{block-averaged thermal width: } 1.55491430753  +/- 0.0298681614987 \\
+\end{split}
+\end{align} 
+
+\end{enumerate}
+
+\section{6/11/2018}
+\begin{enumerate}
+\item Downloading the new RDFs that include bonded species.
+\item Plotting them:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_1-32bead-bonded-tip4pF.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_1-32bead-bonded-tip4pF_1.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_1-32bead-bonded-tip4pF_2.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{1_1-32bead-bonded-tip4pF.png}
+\end{figure}
+
+\item Updated plot for O-O 32 bead: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_0-32bead_2.png}
+\end{figure}
+
+\item Nick says that temperatures can be lowered to like 200 K for a water model.  So, I will just check myself.  
+
+\end{enumerate}
+
+\section{6/12/2018}
+\begin{enumerate}
+\item First, let's make sure water is completely finished.  We will start by organizing the water folder, removing unnecessary elements, updating the GitHub, and then recomputing the TIP4P/F RDFs using a finer bin size.  
+\end{enumerate}
+
+\section{6/13/2018}
+\begin{enumerate}
+\item Taking from 6/7/2018, we will again analyze the results from RDF-32bead-freq100.xyz to construct the appropriate RDFs, but with a finer bin size.  Running the O-O using bin size of 0.05 instead of 0.1 as a test.  If this works, we will compute the others.  
+\item The problem is that this no longer works on bigmem.  It works on the local node, but not on the depablo node.  So, we are going to have to diagnose what the issue is.  It might be a problem with memory usage in the RDF code.  Finalizing the RDFs will have to wait.  
+\item In order to get accurate measurements of the pure TIP4P/F density, we will run 216 molecules at 1.0 atm, classical, doing 100 ps (200,000 steps) of equilibration followed by 10 ns (20,000,000 steps) of production.  Filename is density\_calc followed by temperature.  We will check 250, 270, 275, 285, 298, 320, 340, 360.  We are starting by running T = 298.  
+\end{enumerate}
+
+\section{6/14/2018}
+\begin{enumerate}
+\item Tried running water using the new python script tip4p.py, but it failed after 3,690,900 steps.  The error given was: 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{water_error}
+\end{figure}
+\item Let's try running the old script from GitHub (which is basically just taken from Mike).  We will figure this out.  Perhaps it has to do with data collection or how I've written the new script.  It shouldn't fail after less than 4 million steps.  
+\item Well, despite these issues, we at least know that the interface should be working.  So, let's just look at that for now.   
+\item We will do fully NVT simulations using 1 bead and fully NVT simulations using 32 beads.  For each we will equilibrate the system for 1 ns and then do production for another 3 ns.  We will collect trajectories every 1000 steps and record restart files every 500,000 steps.  We will test temperatures 298, 285, 275, 270, 250, and 235.    Filename is full-1bead-298 for 298 K.  Actually, after 1 bead 298, we are going to switch this to full-<temperature>-1bead.  
+\item This time the tip4pF.py file failed after only 2236500 steps.  Changing the barostat to have a parameter of 10000 instead of 1000.  Changed temperature to 298.15 instead of 298.  Made change so that production xyz's are recorded at trajFreq1 and trajFreq2 instead of accidentally hard-coded 100 and 50.  
+\item Was able to run the RDF program on depablo-gpu without specifying gres=gpu:1.  Running this now trying bin size of 0.01.  Set the time limit to 72hr in case it takes longer.  
+\end{enumerate}
+
+\section{6/15/2018}
+\begin{enumerate}
+\item For water, we will test densities 235, 250, 270, 275, 285, 298, 320, 340, 360 as described above.  
+\end{enumerate}
+
+\section{6/19/2018}
+\begin{enumerate}
+\item Currently retrieving the densities for pure water 1 bead as described above.  235 complete, 250 complete, 270 complete, 275 complete, 285 complete, 298 complete, 320 complete, 340 complete, 360 complete.  
+\item Ok, now that we have this data, we want to rigorously compute average density values and corresponding uncertainty estimates using the standard error.
+\item The standard error is simply the standard deviation of the sampling distribution of the mean.  The sampling distribution is when you pick $n$ items from a population, add them together, and then divide the sum by $n$.  To get the standard deviation of this quantity, we get the variance and take the square root.  So, we have 
+
+\begin{align}
+\begin{split}
+\text{Var}\left(\frac{\sum_{i=1}^nX_i}{n}\right) = \frac{1}{n^2}\text{Var}\left(\sum_{i=1}^nX_i\right) = \frac{1}{n^2}n\sigma^2 = \frac{\sigma^2}{n}
+\end{split}
+\end{align} 
+We then take the square root to get the standard error $\frac{\sigma}{\sqrt{n}}$.  (https://stats.stackexchange.com/questions/89154/general-method-for-deriving-the-standard-error).  $\sigma$ is the standard deviation of the population. When the standard deviation of the population is not known, we can use the sampling standard deviation $s$.  
+\item To get statistically rigorous estimate of the average values and errors in a simulation. we do block averaging.  As explained in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2865156/, a trajectory with $N = M\cdot n$ snapshots is divided into $M$ blocks with an initial very short block length, such as $n = 1$.  The average of an observable is calculated for each block yielding $M$ values.  The block length $n$ is gradually increased and the set of block averages is recalculated for each length.  Further, for each value of $n$, the standard deviation among the block averages, $\sigma_n$, is used to calculate a running estimate of the overall standard error, namely $\frac{\sigma_n}{\sqrt{M}}$, which is the standard error in estimates of the mean based on blocks of length $n$.  This value increases monotonically with $n$ and asymptotes to the true standard error associated with the average observable value.  
+\item So, let's create a python script density\_analysis.py and apply the block averaging technique to analyze density for 216 TIP4P/F molecules, 10 ns of production, 1 bead, in the file.
+\item Well, the bad news is that the simulations I ran were NVT.  Crap.  So, we are going to have to re-do this.  Man, it is pretty ridiculous how long this is taking me.  Let's get a move on already. 
+\item Now re-running the water densities in NPT conditions.   
+\item Going in to /project/depablo/kswanson/hexane-water/dash\_work/water/RDF-new/tip4pF to get the RDF we computed on 32 bead trajectory, 216 molecules, NVT for 200 ps as described earlier.  This time, we used a bin size of 0.05 instead of 0.1 to see if the RDFs get any smoother.  We will download these rdfs into laptop and then print images. 
+\item If densities fail, we will have to either analyze the xyz trajectory or periodically write out the densities using a python operation.  Alternatively, we could just manually run 2 at a time and collect densities over time.    
+\item As an update to the RDFs, we computed the same as before using the full 32 bead trajectory, except this time we used a bin size of 0.05 instead of 0.1:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_0-32bead-bonded-tip4pF-bin05.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_1-32bead-bonded-tip4pF-bin05.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{1_1-32bead-bonded-tip4pF-bin05.png}
+\end{figure}
+
+\item To get slightly sharper images, we will try a bin size of 0.01, and then just call it quits after that.  We will do this in the folder RDF-new/tip4pF.  
+\item Now we are going to do full analyses of the interfacial 1 bead and 32 bead cases.  
+\item First, we will analyze filenames full-1bead-298, which consist of 500 ps (1,000,000 steps) of equilibration and 1.5 ns (3,000,000 steps) of production, both in the NVT ensemble, using 1 bead, restart files catalogued every 500,000 steps, trajectory recorded every 1,000 steps, ptensor recorded every 20 steps, waldman mixing.  So, first, we will look at interfacial width measurements.  Using density\_analysis.sbatch, which runs density\_profile\_postproduction\_PI\_largefile\_UPDATE.py, we collect the density profiles at each trajectory step using 2000 bins and 20000 bins.  The resulting text files are labelled like densities\_water\_full-1bead-298-2000bins-density\_profiles.txt (or 20000).  
+\item We will then download these files and apply density\_profile\_analysis\_UPDATE.py.  
+\item Realized that I did not expand the box size for these simulations.  damn.  So, we are going to have to re-do all of them.  
+\item These are running now.
+\item Another thing for pure water density to test is if the restart begins whether or not the .xyz file will simply be added to or if a new file is created.  Hopefully it will simply be added to, because then when we restart the xyz file will be continuously added to and we can simply do the density analysis using the bounds and mass information from the .xyz file.  or print out the mass before the simulation or something. 
+
+\end{enumerate}
+
+\section{6/21/2018}
+\begin{enumerate}
+\item We will begin today by analyzing the set of 1bead NVT interface runs, which consist of: 500 ps (1M steps) NVT equilibration, 3 ns (6 M steps) production, where the volume was extended by 20 on both sides, 1 path integral bead, restart files every 1M steps, traj recorded every 1000 steps.  We will start as above by using density\_analysis.sbatch, which runs density\_profile\_postproduction\_PI\_largefile\_UPDATE.py, we collect the density profiles at each trajectory step using 2000 bins.  The resulting text files are labelled like densities\_water\_full-1bead-298-2000bins.txt.  
+\item Now downloading these text files to laptop.  We will now use density\_profile\_analysis\_UPDATE.py.  
+\item We are choosing to analyze the last 6000 frames, which correspond to the production data, so we choose index\_start=1001 and index\_end=7001.  
+\item Updated density\_profile\_analysis\_UPDATE.py to include block averaging analysis.  Here are the results:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_1_full-298-1bead}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_2_full-298-1bead}
+\end{figure}
+
+Using 200 ps blocks, which is in line with the literature, appears to be a reasonable choice for size when calculating averages and standard errors.  
+
+\item So, on 6M steps of production data (3ns), using 15 blocks of size 200 ps, z length 149.2717, 2000 bins, bulk water between 600 and 800 indices (or 44.78151 Angstroms and 59.70868), bulk hexane between 1100 and 1240 indices (or 82.099435 and 92.548454 Angstroms), we have from simultaneous fitting (and the bulk regions):
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.995713529553  +/- 0.000227886323623 \\
+\text{bulk hexane density: } 0.656683170779  +/- 0.000744213918941 \\
+\text{block-averaged intrinsic width: } 0.649073945814  +/- 0.00577251469653\\
+\text{block-averaged thermal width: } 1.48440988479  +/- 0.0186896325302 \\
+\end{split}
+\end{align} 
+
+\item Working on tension\_analysis\_UPDATE.py.  Downloading the pressure tensor info from full-298-1bead, pressure\_tensors-full-198-1bead.txt.  
+
+\item How can Patel cite an appropriate interfacial tension compared to experiment given NVT?
+
+\item Interfacial tension overall is 37.9, but the SE is like 400.  What the fuck is going on?  How does this compare to an equivalent NPT simulation?  To check this, we are running full-298-NPT, which is the same as full-298-1bead but with NPT conditions (no PI), and no z-expansion of the box.  
+\item Also try collecting this information every half femptosecond so we have more data, and also DO NOT DIVIDE BY 1/2 BECAUSE WE NO LONGER HAVE TWO INTERFACES, and also try doing the simulation NVT with no additional volume added so that it is just like Patel and also look at other temperatures to see how they are comparatively.  Perhaps just collect a huge amount of data?
+
+\end{enumerate}
+
+\section{6/25/2018}
+\begin{enumerate}
+\item Current To Do List:
+\subitem Reading on geochemical isotope fractionation motivation for the hexane-water problem
+\subitem Make RDF calculator compatible on depablo node by using multiple processors (-ntasks-per-node, can even specify amount of memory to use)
+\subitem Look at Mike's Anisotropic MC Barostat, test it, see what is wrong, and try to fix it.  
+\subitem When using the NVT with expanded boundaries, find a way to calculate the pressure of the total system (if it doesn't change too much from 1 atm we are fine).  Perhaps use the Elastic bath method.  
+\subitem Read about pure water/vapor interface, and look up path integral papers by Paizani (use this as motivating context)
+\subitem Compute primary pure water/vapor interface properties 
+\subitem Fix pressure calculation in PIMD code, and add capability to compute pressure tensor elements (or interfacial tension) across a specified box length 
+\subitem Read Tuckerman wodrk/virial theorem, and section 12.3.  
+\subitem Consider simulating W-H-W interface with vapor on both sides
+\subitem Consider simulating the NVT extra volume as we have been doing, but then remove the vacuum and choose the average "box" size containing the molecules in order to simulate at NVT with no extra space, thus allowing us to do the interfacial tension calculation once the pressure aspect has been fixed in PIMD? 
+\subitem Compare DASH results to OpenMM
+\subitem Finish computing interfacial width measurements from multiple temperatures using 1 and 32 beads. 
+\subitem TAFFI hexane - has it really been parametrized for 32 beads?  Density is correct at 1 bead so... 
+\subitem For interfacial tension, collect every single half femtosecond to get more data?  And also simulate longer?  Choose better block sizes?
+\subitem Fix interface\_UPDATE.py so that pressure tensor information is output at regular intervals, so that if a restart is needed we don't lose all of that information.  
+\subitem Check full-298-NPT run to see if pressure tensor calculations are any more stable.  Consider running a Patel-style NVT run also to check this.  
+\subitem Optimize TAFFI hexane for 32 beads.  Density as a function of epsilon and sigma.  
+\subitem Mike D2O paper, geology ideas, Paizani
+\subitem Clean up code generally 
+
+\item Today, we will start by checking the 32 bead calculations at a variety of temperatures to see if they finished running.  They did not finish running, only got about 60\% through the production run.  So, we should try to do a restart of these simulations using their last saved restart file.  We may have to add restart capability to the file used to simulate these runs, interface\_UPDATE.py.  We will also check that the simulation will simply continue to add to the already-existant .xyz file, so that we don't lose information. 
+\item .xyz files when restarted are overwritten, not added to.  So, we will have to do a separate xyz file and then combine them.  We will use the command cat a.txt b.txt > c.txt
+\item We have also realized that in order to avoid the problem of overlapping .xyz files after a restart, we need to have the restart file and trajectory files recorded at the same frequency.  And because of this, we need to not record a separate .xml file every 1000 steps since that would be ludicrous.  So, we will change interface\_UPDATE.py to not only avoid writing the initial config during restart, but also to generally avoid writing separate .xml files.  It's not like I've ever needed that anyway.  
+\item DASH writes files at step 1001 if the freq is set to 1000.  So, need to set number of steps to 1001 if want to capture the 1000th configuration I think.  OR, just have the system writeConfig at the end of the simulation.  Then, when we restart, we will just have a double configuration in the trajectory file. 
+\item Implemented these changes. 
+\item Running the 32 bead, NVT, 1M equil, 6M prod, write freq 1000, tensor freq 20, expanded box size by 20 angstroms.  
+\item Now we are going to finish analyzing the rest of the 1 bead data as before.  
+\item We first use density\_analysis.sbatch to collect density profiles with 2000 bins.  We are doing this for temperatures 235, 250, 270, 275, 285.  
+\item Now we will download these files to laptop.   
+\item Block-averaging analysis for temperature 285:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_1_full-285-1bead}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_2_full-285-1bead}
+\end{figure}
+
+Using 200 ps again, i.e. 15 blocks, and the same other parameters as above, we get for 285:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.997755320581  +/- 0.000285565797713 \\
+\text{bulk hexane density: } 0.671907619392  +/- 0.000559434913252 \\
+\text{block-averaged intrinsic width: } 0.583875387151  +/- 0.00638389740959\\
+\text{block-averaged thermal width: } 1.43708505118  +/- 0.0220312686935 \\
+\end{split}
+\end{align} 
+
+\item Block averaging analysis for temperature 275:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_1_full-275-1bead}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_2_full-275-1bead}
+\end{figure}
+
+Based on these images we will use 200 ps, i.e. 15 blocks, and the same as other parameters, so we get for 275:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.996016559218  +/- 0.0010609755986 \\
+\text{bulk hexane density: } 0.684747557408  +/- 0.000617622666816 \\
+\text{block-averaged intrinsic width: } 0.52819126805  +/- 0.00957973357639\\
+\text{block-averaged thermal width: } 1.41593938545  +/- 0.0388654184264 \\
+\end{split}
+\end{align} 
+
+\item For temperature 270:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_1_full-270-1bead}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_2_full-270-1bead}
+\end{figure}
+
+\item Again using 15 200 ps blocks, we have for 270 K:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.998561389514  +/- 0.000314906166251 \\
+\text{bulk hexane density: } 0.69042758613  +/- 0.0004139396481 \\
+\text{block-averaged intrinsic width: } 0.509291861116  +/- 0.00776010775438\\
+\text{block-averaged thermal width: } 1.4160674967  +/- 0.0369387679761 \\
+\end{split}
+\end{align} 
+
+\item For 250 K: 
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_1_full-250-1bead}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_2_full-250-1bead}
+\end{figure}
+
+\item We will choose block size 375, i.e. 8 blocks: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.966762551535  +/- 0.0147615001711 \\
+\text{bulk hexane density: } 0.710996333594  +/- 0.000541417471448\\
+\text{block-averaged intrinsic width: } 0.342052719366  +/- 0.0257086187104\\
+\text{block-averaged thermal width: } 1.38111965112  +/- 0.0907609372211 \\
+\end{split}
+\end{align} 
+
+\item Finally for 235:  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_1_full-235-1bead}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_2_full-235-1bead}
+\end{figure}
+
+\item Based on this analysis, we will choose 6 blocks of 500 ps:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.966762551535  +/- 0.0180457984728 \\
+\text{bulk hexane density: } 0.724432392725  +/- 0.00115157742443\\
+\text{block-averaged intrinsic width: } -3.40710396135  +/- 1.70675830701\\
+\text{block-averaged thermal width: } 1.45299812509  +/- 0.135558543799 \\
+\end{split}
+\end{align} 
+
+
+
+\item Just talked to Mike, and he thought that I should just pick one block size for the entire thing.  Also mentioned that you could just do like 10 different runs, which would then count as independent samples and would be an effective way to get rigorous SE's without doing blocking.  
+
+\item So we will write all other results using 6 blocks of 500 ps data (above 235 was incorrect): 
+
+\item 235K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.971006884639  +/- 0.00444845824769 \\
+\text{bulk hexane density: } 0.724432392725  +/- 0.00115157742443\\
+\text{block-averaged intrinsic width: } 0.245468938166  +/- 0.0417885209961\\
+\text{block-averaged thermal width: } 1.47897184995  +/- 0.167600370102 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-235-1bead}
+\end{figure}
+
+\item 250K :
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.966762551535  +/- 0.0180457984728 \\
+\text{bulk hexane density: } 0.710996333594  +/- 0.00070321153492\\
+\text{block-averaged intrinsic width: } 0.335771955076  +/- 0.0250859138861\\
+\text{block-averaged thermal width: } 1.43270825552  +/- 0.12004190068 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-250-1bead}
+\end{figure}
+
+\item 270K:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.998561389514  +/- 0.000499998740002 \\
+\text{bulk hexane density: } 0.69042758613  +/- 0.000358676141758\\
+\text{block-averaged intrinsic width: } 0.503602402972  +/- 0.00823472472776\\
+\text{block-averaged thermal width: } 1.44160383936  +/- 0.0542859381302 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-270-1bead}
+\end{figure}
+
+\item 275K:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.996016559218  +/- 0.00166288943787 \\
+\text{bulk hexane density: } 0.684747557408  +/- 0.0004673261792\\
+\text{block-averaged intrinsic width: } 0.516102600049  +/- 0.0133394410856\\
+\text{block-averaged thermal width: } 1.55306652149  +/- 0.140603870505 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-275-1bead}
+\end{figure}
+
+\item 285K:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.997755320581  +/- 0.00044213091693 \\
+\text{bulk hexane density: } 0.671907619392  +/- 0.000526955663997\\
+\text{block-averaged intrinsic width: } 0.576835497805  +/- 0.00921756710736\\
+\text{block-averaged thermal width: } 1.47978208171  +/- 0.0232131085263 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-285-1bead}
+\end{figure}
+
+\item 298K:
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.995713529553  +/- 0.000309773172975\\
+\text{bulk hexane density: } 0.656683170779  +/- 0.000613797835599\\
+\text{block-averaged intrinsic width: } 0.645217249072  +/- 0.00509714684263\\
+\text{block-averaged thermal width: } 1.5243801072  +/- 0.0192357313655 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-298-1bead}
+\end{figure}
+
+
+
+
+\end{enumerate}
 
 
 

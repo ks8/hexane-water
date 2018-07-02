@@ -267,7 +267,7 @@ def process_datafile(files, options):
 
 		# Record restart xml files if specified
 		if record_restart:
-			writeRestart = WriteConfig(state, handle='restart', fn=filename, format='xml', writeEvery=restartFreq)
+			writeRestart = WriteConfig(state, handle='restart', fn=filename+str('_*'), format='xml', writeEvery=restartFreq)
 			state.activateWriteConfig(writeRestart)
 
 		# Add the integrator
@@ -692,7 +692,7 @@ def process_datafile(files, options):
 
 	# Record restart xml files if specified
 	if record_restart:
-		writeRestart = WriteConfig(state, handle='restart', fn=filename, format='xml', writeEvery=restartFreq)
+		writeRestart = WriteConfig(state, handle='restart', fn=filename+str('_*'), format='xml', writeEvery=restartFreq)
 		state.activateWriteConfig(writeRestart)
 
 	# Add the integrator

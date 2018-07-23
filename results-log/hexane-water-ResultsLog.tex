@@ -1478,9 +1478,19 @@ Using 200 ps blocks, which is in line with the literature, appears to be a reaso
 \subitem For interfacial tension, collect every single half femtosecond to get more data?  And also simulate longer?  Choose better block sizes?
 \subitem Fix interface\_UPDATE.py so that pressure tensor information is output at regular intervals, so that if a restart is needed we don't lose all of that information.  
 \subitem Check full-298-NPT run to see if pressure tensor calculations are any more stable.  Consider running a Patel-style NVT run also to check this.  
-\subitem Optimize TAFFI hexane for 32 beads.  Density as a function of epsilon and sigma.  
-\subitem Mike D2O paper, geology ideas, Paizani
+\subitem Compute the 90-10 width for comparison.  
+\subitem Optimize TAFFI hexane for 32 beads.  Density as a function of epsilon and sigma. 
+\subitem Hexane orientation for 32 beads.   
+\subitem Compute density profiles using 20,000 bins
+\subitem Check out what's going on with the 32 versus 1 bead molecular orientations - is this a coding error?  If not, how does this line up with experimental information, and how does it compare to the previous story of a "double" layer in other simulation papers?  
+\subitem Mike D2O paper, geology ideas, Paizani, https://pubs.acs.org/doi/abs/10.1021/ct5004115, https://pubs.acs.org/doi/pdfplus/10.1021/acs.jpclett.7b00979
 \subitem Clean up code generally 
+\subitem DON'T FORGET that I made special changes to utils.py, specifically the water stuff, for restart as opposed to random in create tip4p flexible.  
+\subitem Fix pure water (and hexane) DASH code with appropriate restart protocols (similar to fixes for interface code)
+\subitem Read Markland papers, and ion stuff?  solid water interfaces?
+\subitem Patel says that bulk densities were obtained from fits to the individual liquid density profiles...we could try that
+\subitem Whey are there ANY values of water orientation, say, inside the hexane region??
+\subitem URGENT: Confirm that pure TIP4P/F water with 1 bead and 32 beads has a non-ice RDF.  Also confirm this for TAFFI hexane.  Make it clear on the data table slide that Patel and Brooks implemented a different model.  Put simulation values on slide 16 for densities, as well as experimental.  Compute 1 bead MC Barostat density, check 8, 16, 32 beads, to see what is going on here.  Do a brute force pressure calculation to find pressure of the NVT systems (can only do this for 1 bead) to check what pressure we are computing values at.  Characterize everything in NPT to show full proof of concept.  Run at more temperatures to see that the difference in intrinsic widths does not jump at 250.  UNDERSTAND why computing the pressure is important?  Understand why we can't compute pressure currently with PIMD.  Use OPLS/LAMMPS to compute the RDF for hexane, and use THAT to compare to TAFFI hexane and also show that low temperature hexane is fine.  Do the NVT system using a restricted V, compute pressure, then expand V (32 beads) until we get P = 1.0 atm....brute force way of achieving the appropriate density of the system without extra vacuum.  
 
 \item Today, we will start by checking the 32 bead calculations at a variety of temperatures to see if they finished running.  They did not finish running, only got about 60\% through the production run.  So, we should try to do a restart of these simulations using their last saved restart file.  We may have to add restart capability to the file used to simulate these runs, interface\_UPDATE.py.  We will also check that the simulation will simply continue to add to the already-existant .xyz file, so that we don't lose information. 
 \item .xyz files when restarted are overwritten, not added to.  So, we will have to do a separate xyz file and then combine them.  We will use the command cat a.txt b.txt > c.txt
@@ -1708,9 +1718,531 @@ Based on these images we will use 200 ps, i.e. 15 blocks, and the same as other 
 \includegraphics[scale=0.6]{interface_density_profile_full-298-1bead}
 \end{figure}
 
+\end{enumerate}
+
+
+\section{6/28/2018}
+\begin{enumerate}
+\item 32bead jobs still running.  We will begin today by looking at Mike's Anisotropic MC Barostat.  Let's run 216 water molecules, checking the density after 200000 steps using 1 bead and then using 16 beads.  Then, we will inspect the code and compare it to the theory.  
+\item Created MCBarostat2.py file for running these simulations. 
+\item We should also today download new RDF, test RDF using multiple depablo cores, and check molecular orientation of 1 bead cases rigorously, retry bulk water simulations using updated restart protocol 
+\item Spent about 30 min running over the Barostat.  Could be worth it to study this in greater depth and ask Mike questions.  
+\item On /project/depablo/kswanson/hexane-water/dash\_work/interface, using orientation\_postproduction.sbatch to analyze full-298-1bead.xyz, as well as 285, 275, 270, 250, and 235.  This runs molecular\_orientation\_water\_postproduction\_UPDATE.py, in files called orientations\_water\_full-298-1bead-orientations-water.txt.  We are using 2000 bins.  
+\end{enumerate}
+
+\section{7/2/2018}
+\begin{enumerate}
+\item 32bead jobs did not quite finish.  Got to around 85\%.  So, we are going to have to restart them.  In addition, the 298 temperature one stopped because of the following error: /tmp/slurmd/job47041048/slurm\_script: line 30:  9171 Floating point exceptionpython interface\_UPDATE.py
+\item So, let's start with the 235K temperature restart simulation.  We were writing trajectories every 10,000 steps.  The 235 simulation ended at step 6207100 out of 7000000 total steps.  The simulation will restart at step 6200000, so we need to run a simulation for 800,000 steps to get to the total number of steps.  So, we will run 0 equil steps, 800000 prod steps, filename full-235-32bead-part2, restarting from full-235-32bead.xml.  Running this now.  
+\item However, I get the following error: 
+XML [full-235-32bead.xml] parsed with errors
+Error description: Could not allocate memory
+Error offset: 0
+\item I believe that this is because of the size of the restart file.  Perhaps this indicates that we need to print separate restart files so that any single one is readable, or perhaps we should write a python script to extract the final restart configuration in the existing files.  
+\item I attempted a python script, restart\_extraction.py, to read through a restart .xml file to look for a specific "turn" configuration, but it takes way too long to read the file.  So for the time being, we will do the following: we will run the 298 simulation using an updated interface\_UPDATE.py file, which will print out independent files for the configurations.  Then, for the time being, we will just use the data that we have available for the other temperatures. For each of these, it appears that we have enough data for a reasonable comparison.  
+\item Actually, we should also just simulate the other temperatures, but only do whatever extra we need beyond equilibration!  
+\item 235K got to 6207100
+\item 250K got to 5906100
+\item 270K got to 5917000
+\item 275K got to 5905300
+\item 285K got to 6329600
+\item So, for 235K we will run 800,000 production steps after 1M equilibration steps, filename full-235-32bead-part2.  
+\item For 250K, we will run 1100000 production steps.
+\item For 270K, we will run 1090000 production steps.  
+\item For 275K, we will run 1100000 production steps.  
+\item For 285K, we will run 680,000 production steps.  
+\item At the end, we can concatenate the traj files to get enough data in one spot.  
+\item To analyze molecular orientation, we first use orientation\_postproduction.sbatch, which runs molecular\_orientation\_water\_postproduction\_UPDATE.py.  We do this for all of the temperatures, using 2000 bins to remain consistent with the density profile analysis previously done.  We then download the resulting text files onto laptop.  The files are called orientations\_water\_full-298-1bead-orientations-water.txt.  
+\item We then use the script orientation\_profile\_analysis\_UPDATE.py to analyze the water orientation.  The input includes the orientations text file, as well as the respective 2000 bins density files for water and hexane.  We choose the water region to be between indices 460 and 960, i.e. 34.33 Angstroms and 71.65 Angstroms.  We use 6 blocks for SE analysis, similar to the density studies, which corresponds to 500 ps blocks.  
+\item For 298 and 285, we use the above numbers.  For 275 K, we use 520 to 1000, i.e. 38.81 A and 74.64 A.  For 250 we used 490 to 1050.  For 235 we used 480 to 960.  Here are the pictures:
+
+\item 298:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-1bead-water-orientation}
+\end{figure}
+
+\item 285:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-285-1bead-water-orientation}
+\end{figure}
+
+\item 275:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-275-1bead-water-orientation}
+\end{figure}
+
+\item 270:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-270-1bead-water-orientation}
+\end{figure}
+
+\item 250:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-250-1bead-water-orientation}
+\end{figure}
+
+\item 235:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-235-1bead-water-orientation}
+\end{figure}
+
+\item From /project/depablo/kswanson/hexane-water/water/RDF-new/tip4pF, downloading 0\_0, 0\_1, 1\_1 into water/RDF folder on laptop.  Using RDF\_analysis.py to plot these, which have a bin width of 0.01, the finest bin width yet.  
+
+\item Here are the results, which match perfectly with Markland:
+
+\item O-O:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_0-32bead-bonded-tip4pF-bin01}
+\end{figure}
+
+\item O-H:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_1-32bead-bonded-tip4pF-bin01}
+\end{figure}
+
+\item O-H zoom:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_1-32bead-bonded-tip4pF-bin01-zoom}
+\end{figure}
+
+\item H-H:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{1_1-32bead-bonded-tip4pF-bin01}
+\end{figure}
+
+\item In /project/depablo/kswanson/hexane-water/dash\_work/water/RDF-new/tip4pF, created run\_cpu.sh which runs on depablo nodes when --ntasks-per-node is set to be greater than one.  
+
+\item We checked the interfacial tension from the full-298-1bead-NPT run, which involved doing 1M steps equilibration in NPT, 6M steps production NPT, no z expansion of the box.  Block averaging result gives:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{tension_block_averaging_test}
+\end{figure}
+
+First we downloaded pressure\_tensors-full-298-1bead-NPT.txt to laptop.  We the use tension\_analysis\_UPDATE.py to check the above plot for standard errors.  Since these tensions were collected every 20 steps during production, 6M steps meanas 300,000 tension samples.  Using a block size of 50,000, i.e. 6 blocks, which is similar to previous analyses, we get (doing this manually) 80, 40, 221, -53, -39, 117, giving an average of 61.2311425898 and a standard error of around 41.  
+\item This SE is still huge.  So, how can we fix this?  One thought that comes to mind is to perform this simulation 4 more times, giving us 5 total independent samples, each of which is 3 ns long.  Perhaps we will get more consistent values this way.  So, we will set up 4 more NPT simulations as described above.  The filenames will be full-298-1bead-NPT-second, full-298-1bead-NPT-third etc.  These are NO PI beads, also no restart files to save memory.  
+
+\end{enumerate}
+
+\section{7/5/2018}
+\begin{enumerate}
+\item First, we will do analysis for 32 beads.  Right now, say for temperature 235K, we have two different files.  full-235-32bead.xyz and full-235-32bead-part2.xyz.  The latter also has 1M equilibration steps; so, we cannot simply concatenate the .xyz files.  Instead, we will do the postproduction analysis on each independently, and the combine these postproduction files appropriately in order to obtain the total 3ns required data.  First, let's do density profile analysis for full-235-32bead.xyz.  We use density\_analysis.sbatch to run density\_profile\_postproduction\_PI\_largefile\_UPDATE.py.  The filename will be full-235-32bead-2000bins.  The resulting text files will be named as densities\_water\_full-235-32bead-2000bins.  We will do the same for all other temperatures, except for 298 which is still running.  We will also do the same for the part2.xyz files, giving the names as densities\_water\_full-235-32bead-part2-2000bins.  It looks like the full analysis will take near 10 hours.   
+\item In the mean time, we also being orientation analysis.  We use orientation\_postproduction.sbatch to run molecular\_orientation\_water\_postproduction\_UPDATE.py.  Again we use 2000 bins, filename is orientations\_water\_full-235-32bead-orientations-water.  It looks like these will also take a large number of hours, so we will just run everything, as above.    
+\item WE ALSO NEED TO DO HEXANE ORIENTATION FOR ALL OF THE 1 BEAD CASES!!!  AND THEN WE TURN TO THE NPT RUNS FOR INTERFACIAL TENSION.  ALSO NEED TO CHECK ON DEPABLO NODE RDF CALCULATION TO MAKE SURE IT WORKED. 
+\item We will begin with the hexane orientation for the 1bead cases.  We will need to make the file molecular\_orientation\_hexane\_postproduction\_UPDATE.py starting from molecular\_orientation\_postproduction\_hexane.py.    
+\item We successfully made this file, which is coupled on Midway with orientation\_postproduction\_hexane\.sbatch.  For all 1bead temperatures, we use 2000 bins and filename orientations\_hexane\_full-235-1bead-orientations-hexane.txt.  We set num atoms as 24600, num water atoms as 14600 and num hexane molecules as 500, and 1 bead of course.  
+\item We are also changing labels in orientation\_profile\_analysis\_UPDATE.py so that it can nominally accomadate both water and hexane orientation data.  
+\item Now, downloading all of the orientations\_hexane\_full-temperature-1bead-orientations-hexane.txt files to laptop.  Here are the results:
+\item 235 K, used bins 900 to 1350, and data from 1001 to 7001 (for all) and also 6 blocks of 500 ps
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-235-1bead-hexane-orientation}
+\end{figure}
+
+\item 250 K, used bins 900 to 1450,
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-250-1bead-hexane-orientation}
+\end{figure}
+
+\item 270 K, used bins 940 to 1430,
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-270-1bead-hexane-orientation}
+\end{figure}
+
+\item 275 K, used bins 940 to 1430,
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-275-1bead-hexane-orientation}
+\end{figure}
+
+\item 285 K, used bins 900 to 1400,
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-285-1bead-hexane-orientation}
+\end{figure}
+
+\item 298 K, used bins 900 to 1400,
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-1bead-hexane-orientation}
+\end{figure}
+
+\end{enumerate}
+
+\section{7/9/2018}
+\begin{enumerate}
+\item First, let's check that the RDF calculator using depablo nodes worked.  I believe it worked based on 0\_0.rdf output.  
+\item Second, let's check the interfacial tension of the different NPT runs.  These files are named as full-298-1bead-NPT-second etc, including the first one, full-298-NPT.  Moving tension\_analysis\_UPDATE.py from laptop to hexane-water/dash\_work/interface on Midway.  These have 6M steps production worth, every 20 steps, NPT conditions no expansion of box, giving us 300,000 samples each.  We will compute the total tension for each run.  The tension text files are labeled as pressure\_tensors-full-298-NPT.txt.  In order to provide a length in the z direction, we need to figure out what the average z length is during the simulation (this is why we might ultimately want to do NVT for interfacial tension analysis...).  We put average\_volumes.py onto Midway to analyze the full-298-NPT.xyz trajectory for average volume.  The result tells us that the average z length during production is 91.249382203.  Here is the plot showing the relative stability of the volume during the run:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-NPT-volumes}
+\end{figure}
+
+Using this z length, we get an interfacial tension of 51.2596691092.  Let's move on to the other files.  For full-298-1bead-NPT-second, we get a z length of 91.2383347754 and an interfacial tension of -19.8237300872.  For third, we get a z length of 91.2480718802 and a tension of 70.591413556.  For fourth, we get a z length of 91.2407975042 and an interfacial tension of 62.1764723536.  For fifth we get z length 91.2369622296 and tension 54.4289492533.  Using python, this gives us a mean value of 43.728 and a SE of 16.24.  Well, we have decreased the error rate by more than 50\%, so at least that is good.  Either we need to fix volume or surface area, or take a lot more/longer samples.  For, now, this is good enough.   
+\item Now we are going to restart the full-298-32bead simulation using the most recent restart file.  The simulation got to turn 6114800, which means that, since trajectory files are written every 10,000 steps, we have 6,110,000 recorded, or 890,000 remaining.  So, we will use the most recent restart file, full-298-32bead6110000.xml.  The new filename will be full-298-32bead-restart1.  This is running now.  
+\item Now, we are going to analyze the remaining 32 bead data for interfacial width, water orientation, and hexane orientation.  Downloaded the files densities\_water\_full-235-32bead-2000bins and densities\_water\_full-235-32bead-part2-2000bins etc. to laptop.  Wrote a script called density\_profile\_combining.py, which allows us to combine the density profile text files.  Doing this to create densities\_water\_full-235-32bead-2000bins-combined.txt.  Let's test this first before doing other temperatures.  Doing block averaging on this example, we have:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_1_full-235-32bead-2000bins-combined}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{density_profile_block_averaging_2_full-235-32bead-2000bins-combined}
+\end{figure}
+
+Here, we are using density\_profile\_analysis\_UPDATED.py and indices 100 to 700.  A reasonable plateau is around 100 for block size; since each frame is 10,000 steps, this means 1,000,000 steps, or 500,000 fs, or 500 ps -- again, our familiar result.  So, we will continue to use 6 blocks, each of size 1M simulation steps (500 ps), for our analysis, bulk water between 600 - 800 / 2000 bins, hexane between 1100 and 1240 / 2000 bins, z length 149.2717, 32 beads, densities\_water\_full-235-32bead-2000bins-combined.txt etc.  Here are the results
+
+\item 235K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.980413997142  +/- 0.00128530188038 \\
+\text{bulk hexane density: } 0.706625204186  +/- 0.000560036451757\\
+\text{block-averaged intrinsic width: } 0.331605601366  +/- 0.0307221855429\\
+\text{block-averaged thermal width: } 1.44045587042  +/- 0.161003369231 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-250-32bead}
+\end{figure}
+
+Now combining density files for the other temperatures. Note, the freezing point of water is 273 K while the freezing point of hexane is 178 K
+
+\item 250K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.991087755893  +/- 0.000424788683776 \\
+\text{bulk hexane density: } 0.69108593153  +/- 0.000531080264833\\
+\text{block-averaged intrinsic width: } 0.414132547974  +/- 0.0106579608868\\
+\text{block-averaged thermal width: } 1.39206402466  +/- 0.0475974585851 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-250-32bead}
+\end{figure}
+
+\item 270K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.995497990264  +/- 0.000378265371736 \\
+\text{bulk hexane density: } 0.663223850185  +/- 0.00307545381628\\
+\text{block-averaged intrinsic width: } 0.500838589399  +/- 0.0139220005977\\
+\text{block-averaged thermal width: } 1.42666178829  +/- 0.0315212279293 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-270-32bead}
+\end{figure}
+
+\item 275K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.996323017591  +/- 0.000115714200714 \\
+\text{bulk hexane density: } 0.662616147098  +/- 0.00153815790145\\
+\text{block-averaged intrinsic width: } 0.539555918199  +/- 0.0134021402641\\
+\text{block-averaged thermal width: } 1.46495411091  +/- 0.0528385642611 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-275-32bead}
+\end{figure}
+
+\item 285K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.995069061603  +/- 0.000316247591395 \\
+\text{bulk hexane density: } 0.652949777315  +/- 0.00070502193089\\
+\text{block-averaged intrinsic width: } 0.595070299542  +/- 0.0111360872464\\
+\text{block-averaged thermal width: } 1.5664084387  +/- 0.0313874415689 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-285-32bead}
+\end{figure}
+
+\item Created data\_plotting.py to make simple plots of data with error bars.  Looking at the intrinsic width across temperatures for 32 versus 1 bead, we have:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{intrinsic-width-32bead-vs-1bead}
+\end{figure}
+
+\item For thermal width, we have:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{thermal-width-32bead-vs-1bead}
+\end{figure}
+
+\item Now that we have done all of the interfacial width analysis that we can do for the time being, we will turn to orientation analysis, starting with water.  First, we have to combine these text files, as we did with the density profile information.  
+\item Saving density\_profile\_combining.py as text\_file\_combining.py.  We combine files such as orientations\_water\_full-235-32bead-orientations-water.txt and orientations\_water\_full-235-32bead-part2-orientations-water.txt to create orientations\_water\_full-235-32bead-combined.txt.  We then use orientation\_profile\_analysis\_UPDATE, on indices 100 to 700, plotting the combined density profile data along.  Here are results:
+
+\item 235 K, indices 460 to 960:  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-235-32bead-water-orientation}
+\end{figure}
+
+\item 250 K, indices 460 to 960:  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-250-32bead-water-orientation}
+\end{figure}
+
+\item 270 K, indices 440 to 960:  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-270-32bead-water-orientation}
+\end{figure}
+
+\item 275 K, indices 440 to 960:  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-275-32bead-water-orientation}
+\end{figure}
+
+\item 285 K, indices 460 to 960:  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-285-32bead-water-orientation}
+\end{figure}
+
+\item Shifting gears to take a look at the barostat.  Used git pull origin master inside DASH-6-14-2018 to get latetest version.  Changing folder name to DASH-7-9-2018.  First, we will try the isotropic barostat.  New rule: we have to activate the pressure fix LAST, or it won't know anything about the other fixes.  Also, inside this md engine, putting my 'restart' code in water.py.  Just for consistency.  Modifying MCBarostat2.py to include the current isotropic version of the barostat.  
 
 
 
+\item RUN THE FULL VERSIONS WITH FIXED CODE, INCLUDING 298 RESTART, WE SHOULD ALSO INCREASE TO 20,000 BINS FOR ANALYSIS SO THAT NO ONE COMPLAINS ABOUT THAT AS A POTENTIAL ISSUE!!!  
+\item MUST FINISH HEXANE ORIENTATION!!!!
+ 
+\end{enumerate}
+
+\section{7/10/2018}
+\begin{enumerate}
+\item Created in.dash.py in hexane-water/dash\_work/water, which is essentially the code snippet Mike sent for the isotropic barostat, and we initiate the initial configuration our way (using random in a box based on initial density specification).  Running for 2M steps to see what the density is like.  Note, Mike computes total mass prior to preparing PIMD, that's why he doesn't have to divide by nBeads later on.  Because it fails after 1M steps due to the usual random illegal memory access was encountered.  For now, we will just run five iterations and hope one finishes without an error...Actually, screw that.  We are adding restart/trajectory recording every 10,000 steps.  We can study the volume by collecting bounds from the .xyz file.  Printing the total mass, mtot, at the beginning of the simulation.  This is now running.  
+\item Error, so restarting using iso-test-restart1
+\end{enumerate}
+
+\section{7/11/2018}
+\begin{enumerate}
+\item 
+\item First, we are going to use run-IsoBarostat.sh to run IsoBarostatTest.py, 20M steps, to achieve full relaxation of the system.  We are including restart capabilities because of anticipated errors.  So, we are currently running 216 molecules, 20M steps, 298 K, 1 atm, 32 beads, restart and traj files every 10,000 steps, filename iso-test, data freq 100.  Ultimately, if we need to restart this simulation (which should work fine), we are printing mtot information which will show up in the output script, then we will have to collect bounds information from the .xyz file in post processing in order to compute densities.  IN FACT, we can probably just use the volumes python script as a starting point, since volume is exactly what we want to collect!  This will be easy.  Just have to concatenate .xyz files. 
+\item Note: The error I'm getting now is:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{current-error}
+\end{figure}
+whereas the previous error for water was:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{previous-error}
+\end{figure}
+\item It is after 1M steps that we get the current error.  Restart does not seem to work near the most recent restart files before 1M steps, get the same error.  Things to work on: NVT first, trying Mike's in.dash.py file as exactly as possible to see if we get the same error.  Currently running NVT for 2M steps under same conditions, will restart from there.  called iso-test-NVT.  
+\item The restart, from iso-test-NVT\-990000.xml, is called iso-test-fromNVT.  
+\item Noticed that in output-iso-test, acceptance frequency goes from 0.38 around 250000 turns to 1.0 around 375000 turns...
+\end{enumerate}
+
+\section{7/12/2018}
+\begin{enumerate}
+\item iso-test-fromNVT failed at step 2941200 after starting from step 1990000, which was taken from iso-test-NVT.  Same error.  One more thing we will try before asking Mike is to take his in.dash.py as close as possible to how it is written and try that.  If that fails again...then there must be some problem.  First, going to try compiling the dash code, just in case...We will try running in.dash.py for 20M steps, calling it iso-test-recompile, and we will also try running iso-test-fromNVT-recompile, just to check.  If these fail, then Mike.  
+\item Ok, these are both running now.  Check back in later.  
+\end{enumerate}
+
+\section{7/13/2018}
+\begin{enumerate}
+\item Ok, so iso-test-fromNVT-recompile, which used IsoBarostatTest.py NVT 2M turns followed by 20M NPT turns, finished.  Barostat acceptance was around 85\%.  Let's check density.  
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{densities-iso-test-fromNVT-recompile}
+\end{figure}
+\item Barostat acceptance was around 85\% the whole time.  Perhaps we could try another run, but allowing for barostat tuning this time.  So, we will do the same thing, but called iso-test-fromNVT-tuning, using IsoBarostatTest.py, and see what happens.  
+\item We are also going to try running rcut of 12, iso-test-fromNVT-cut12, without tuning. 
+\item iso-test-fromNVT-cut12 broke after about 1M steps, barostat acceptanc at 100\%.  
+\item iso-test-fromNVT-tuning still going, but we realized that we shouldn't be multiplying pressure by nBeads!!  So, let's remove that, and try again, with tuning.  iso-test-fromNVT-normalpress will be our filename.  We will do rcut 9 as well.  
+\item It got the good old illegal memory access error.  Haven't tried restarting it...but here is denisty:
+\end{enumerate}
+
+\section{7/16/2018}
+\begin{enumerate}
+\item Downloading Mike's most recent file, in.dash.py.  I make the following changes: filepath, setting number of molecules and initializing them randomly using my method.  job name webb, filename poly\_out.  Running now.  Failed, needed to add import math.  Running now.  Got an illegal memory access after only 14,200 steps.  first, let's go back to using Mike's input molecules, h20.crds, which are from some other simulation he ran.  Changed a bit of that section of in.dash.py to work with my water.py version.  This is running now.  Looks like there are 108,000 approx. molecules in this system.  Large!  Mike suggested that besides NVT relaxation, we might want to try a bigger system, because if box size changes below rcut, system might get confused.  To check this, modifying in.dash.py back to the random molecules to do 3650 molecules.  Changed output filename to poly\_out-big, job name is webb-big.  We'll see if either of these encounters an illegal access memory error.  
+\end{enumerate}
+
+\section{7/17/2018}
+\begin{enumerate}
+\item Both Mike's h20.crds and the 3650 molecules finished, with average density of 1.02 and 1.006, respectively.  Next, we will try implementing this stuff using LJCut instead of LJCHARMM, 9 Angstrom cutoff instead of 12, and 32 beads instead of 16, for 3650 molecules in IsoBarostatTest.py.  We will check IsoBarostatTest.py to make sure it is EXACTLY the same implementation, otherwise, as in.dash.py.  Now running IsoBarostatTest.py, filename iso-test-big, 3650 molecules, rcut 9, 20M steps, NPT, 298 K, P = 1, 32 beads, tune=True for the barostat.  
+\item Now, we are going to do the 298 bead analysis, as well as hexane molecular orientation for every temperature.  We have trajectory files full-298-32bead.xyz and full-298-32bead-restart1.xyz.  We will start by concatenating these into the file full-298-32bead-combined.xyz.  Now we want to compute density profile.  We will use density\_analysis.sbatch to run density\_profile\_postproduction\_PI\_largefile\_UPDATE.py, filename full-298-32bead-combined-2000bins, 2000 bins.  Similarly, for water orientation, we will use orientation\_postproduction.sbatch to run molecular\_orientation\_water\_postproduction\_UPDATE.py, filename full-298-32bead-combined-orientations-water, 2000 bins.  Doing the same to get hexane orientations using orientation\_postproduction\_hexane.sbatch.  Made a fix in that underlying file, molecular\_orientation\_hexane\_postproduction\_UPDATE.py, so that num\_atoms\_water is multiplied by nBeads.  Downloading densities\_water\_full-298-32bead-combined-2000bins.txt and the hexane file as well to laptop.  So, using 32 beads, z len 149.2717, 600-800 bulk water indices, 1100-1240 bulk hexane indices, 6 SE blocks, indices 100 to 700, we have:
+
+\item 298K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.992266685321  +/- 0.000589189539472 \\
+\text{bulk hexane density: } 0.633023993264  +/- 0.000872504066697\\
+\text{block-averaged intrinsic width: } 0.636006054646  +/- 0.00555415049777\\
+\text{block-averaged thermal width: } 1.53090018738  +/- 0.047422270205 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-298-32bead-combined}
+\end{figure}
+
+Adding to our plot of interfacial intrinsic widths, this gives us:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{intrinsic-width-32bead-vs-1bead-complete}
+\end{figure}
+
+Now we will look at hexane orientation, using orientation\_profile\_analysis\_UPDATE.py, 900-1400 zlo/zhi, 100-700 indices, 32 beads, 6 blocks.  It looks weird:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-32bead-combined-hexane-orientation}
+\end{figure}
+
+\item Started running the other temperatures, e.g. full-235-32bead and full-235-32bead-part2, etc., to get orientation hexane postproduction profiles.  
+\item Again using orientation\_profile\_analysis\_UPDATE.py, zlo 425 zhi 935, indices 100-700, 298 K 32 beads, we have
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-32bead-combined-water-orientation}
+\end{figure}
+
+\item Made some changes to molecular\_orientation\_hexane\_postproduction\_UPDATE.py with more nBeads multipliers, re-doing the 298 postproduction to see if that helps.  
+
+\end{enumerate}
+
+\subsection{7/18/2018}
+\begin{enumerate}
+\item In order to provide a more direct comparison to the literature, we will truncate the 298 K molecular orientations, for both 1 bead and 32 beads, to only reflect what is going on at the interface.  Below, we use   600 - 930 zlo zhi, indices 100 - 700 for the 32 bead and 1000 - 7000 for the 1 bead, full-298-32bead-combined and full-298-1bead, 2000 bins.  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-1bead-interfacial}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-32bead-interfacial}
+\end{figure}
+
+\end{enumerate}
+
+\section{7/19/2018}
+\begin{enumerate}
+\item We now want to compute RDFs for TAFFI hexane for the sake of having complete validation. 
+\item First let's see if we can initialize a system of 216 TAFFI hexane molecules at the 298 K experimental density of 0.6549.  
+
+
+ Given the way TAFFI is currently implemented in DASH, we will run a 1 bead NPT simulation at 298 K and 1.0 atm using 500 hexane molecules for 1 ns (2M steps) to find the 
+
+ do 100 ps NVT equilibration at 298 K, then 250 ps production NVT at 298 K 
+
+\item Adding to our thermal plot:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{thermal-width-32bead-vs-1bead-complete}
+\end{figure}
+\end{enumerate}
+
+\section{7/20/2018}
+\begin{enumerate}
+\item iso-test-big ran for 7151100 turns.  Let's check the density.  Couldn't load the file...so we will have to do readlines() in the average\_volume.py file.  
+\item Looking again at some hexane orientations.  full-298-1bead, using indices 1000 - 7000 and z indices 900 - 1200:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-1bead-interfacial-hexane-orientation}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-298-32bead-interfacial-hexane-orientation}
+\end{figure}
+\item Talked to Juan.  Putting his suggestions in the to-do list as URGENT. 
+\item Let's start with the water freezing issue.  We will start with 1 bead.  We will run 1000 molecules (to avoid too small of a box problems), 1 bead, NPT during 100 ps equilibration (200,000 steps) T = 235 K P = 1.0 atm recording every 10000 steps, NVT during 250 ps production (500,000 steps) T = 235 K, recording every 1000 steps.  We will first start with the 100 ps equilibration run.  We will use tip4pF3.py on hexane-water/dash\_work/water, using run3.sh, and the filename will be RDF-235-equil.  Eventually, we might want to simulate for a full 3 ns to make sure no nucleation events occur there.  Also, may want to look at the hexane-water interface itself.  
+\item Ok, now restarting from RDF-235-equil200000.xml for the production run.  Density of equil run about 0.983.  Restart is called RDF-235-prod.  
+\item Now, moving the .xyz file from production, called RDF-235-prod-1000.xyz, to hexane-water/dash\_work/water/RDF-new/tip4pF.  Now, using lamms\_molecule\_replicator\_water.py to create a lammps file with 1000 water molecules.  ran lammps\_molecule\_replicator\_water.py -data1=data\_water\_flexible.txt -out=RDF-tip4pF-1000.data, which is our new output file.  We then used dash\_restart\_to\_lammps\_RDF.py and the inputs -lammps\_file=RDF-tip4pF-1000.data, -dash\_file=RDF-235-prod500000.xml, -bond\_tag=BondQuartic, -angle\_tag=AngleHarmonic, -filename=sys.RDF-tip4pF-1000.data.txt. Changed filename to remove extra .txt.  Changed 3000 atoms to 4000 atoms to account for M site, and changed order to atoms, atom types, bonds, bond types, etc.  Running run\_cpu.sh, which has the command,  ./get\_rdfs 1 RDF-235-prod-1000.xyz sys.RDF-4ip4pF-1000.data.txt < rdf.input, where rdf.input used bin size 0.1, including bonded stuff.  Redid it with 8 as the length metric.  Downloaded to laptop, used RDF\_analysis.py to produce the following:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_0-1bead-bonded-tip4pF-235}
+\end{figure}
+which is very different from 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{skinner_ice}
+\end{figure}
+\end{enumerate}
+
+\section{7/22/2018}
+\begin{enumerate}
+\item Saving interface\_UPDATE.py and run\_UPDATE.sh to github.  
+\item Realize that Brian's method of computing elapsed time to print things like pressure before the end of the simulation time limit doesn't work in our case, because the nSteps are all run first before we can print anything.  However, what we could do, actually, is we could run a loop over the nSteps, in sections of, say, 10,000, i.e. the same as the write frequency, so that we write the relevant pressure information inside that loop.  Let's, for now, just run short enough simulations that they will be within the time limit we care about, I think.  Plus, we are only going to do 1 bead, so it should be fine.  We added pressure scalar line to interface\_UPDATE.py.  Let's test this now to make sure it prints correctly.  In this small test, it appears as though this is working correctly.  So, as a start, let's compute the pressure of our NVT interfacial system at 298 K.  We will do: filename press-198-1bead, 298 K, 1M NVT equilibration steps, 6M NVT production steps, 1 bead, pressure recording every step, restart/traj files recorded every 50K steps, expanded box size.  This is running now.  
+\item We showed that for a system of 1000 TIP4P/F molecules at 235 K, we undoubtedly have liquid water, and not ice.  Now, it would be useful to show that for our specific interfacial system, we have liquid water and not ice.  THE MELTING POINT OF HEXANE IS 177 - 179 K; FOR NOW, WE WILL ASSUME THAT THIS IS FINE.  
+\item 1.  Compute finer-grained RDF for 1000 TIP4P/F 1 bead at 235 K.  2.  Compute RDF for 1000 TIP4P/F 32 beads at 235 K.  3.  Compute RDF for 500 TAFFI hexane 32 beads at 298 K.  4.  Compute RDF for 500 OPLS hexane at 298 K.  5.  Compute RDF for 500 TAFFI hexane 1 bead at 235 K.  6.  Compute RDF for 500 TAFFI hexane 32 beads at 235 K. 8. Compute O-O RDF for the 235 32 bead case (we already have trajectory files on this...)   9.  Try creating a PythonOperation, which simply prints values from the bounds stuff....that way we are simply writing to an external file, not actually computing anything.  
+\item Running 1. using bin size 0.01 using run\_cpu.sh inside RDF-new/tip4pF, which runs ./get\_rdfs 1 RDF-235-prod-1000.xyz sys.RDF-tip4pF-1000.data.txt < rdf.input.  Just computing O-O rdf this time.  Here is the plot:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_0-1bead-bonded-tip4pF-235-bin01}
+\end{figure}
+\item 2.  Let's now investigate the 32 bead issue.  We will start from the 1 bead NPT simulation of 100 ps (200K steps) at T = 235 K P = 1.0 atm recording every 10,000 steps, filename RDF-235-equil200000.xml, since we cannot currently do constant pressure with path integrals to find the appropriate equilibrium density at 235 K and 1 atm.  Nevertheless: we will now, restarting from this file, do NVT during 250 ps production (500,000 steps), 32 beads, T = 235 K, recording every 1000 steps, filename RDF-235-32bead-prod.   Ok, restarting using 32 beads caused an error.  Modifying tip4pF3.py to allow for parameter specification of an initial density, called density\_init.  So, I think what we might do here is to initialize the system at the density given by the 1 bead case, which is approximately 0.983, and then do 100 (200,000 steps) ps NVT equilibration using 32 beads.  The other way we could potentially do this is to simulate a slab of water and put vacuum on the sides....but that sounds like it could also have its issues.  So, we will: filename is RDF-235-32bead-equil, 1000 molecules, 100 ps, NVT at T = 235 K, density 0.983, 32 beads, recording every 10,000 steps, data every 100 steps.  This is running now.  Ok, just finished.  Now we will do the production step, which is the same but 500,000 steps, filename RDF-235-32bead-prod.  Now this has finished as well.  GREAT, this didn't appear to work because the RDF program quits since not enough memory.  Well, we know that 216 molecules works - so, let's do that.  Redoing the equilibration step described above, except with 216 molecules.  Now running the production step.  This finished running.  Following similar steps to set up RDF analysis, using 0.01 bin, we have:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{0_0-32bead-bonded-tip4pF-235-bin01}
+\end{figure}
+In fact, to make sure that we do not have a nucleation event after a certain amount of time, we should really check to see what happens after 3.5 nanoseconds.  So, we are going to run the production step, but we will run it for 7M steps.  Because of DASH issues, of course, we may need to restart this simulation as it goes.  We will name it RDF-235-32bead-prod-long, restart/traj every 10,000 steps.  
+\item 3.  We previously had difficulty starting a simulation of TAFFI hexane at a specified density.  The only way it seemed to work was through a lattice approach, where density was then achieved through a gradual relaxation.  What we need is the ability to do a restart PI simulation using TAFFI-hexane.py in dash\_work/hexane, so let's finish that up first.  Then we can do this shit!  Had to put in, specifically hardcoded, all of the nonbonded interactions in order to get the restart file to work in TAFFI-hexane.py.  Now that restart is working we will do the following.  We ran 216 hexane molecules, NPT T = 298 K P = 1.0 atm, initial lattice configuration, 1 bead, 2M steps (2 ns), recording every 10,000 steps, filename TAFFI-RDF-32beads-equil.  It had a final density of approx. 0.6596.  So, we will restart from TAFFI-RDF-32beads-equil2000000.xml, but this time we will do 100,000 steps (100 ps), NVT 298 K, 32 beads, recording restart/traj every 10,000 steps, filename TAFFI-RDF-32beads-finalequil, data every 100, restarting from TAFFI-RDF-32beads-equil2000000.xml.  INTERESTING PROBLEM: when we do the restart, since we are restarting from 1 bead, it doesn't actually transform to 32 beads.  so as a temporary measure, we are going to add preparePIMD in restart then remove immediately.  Now that this run is finished, we will do the following.  NVT 298 K, 250,000 steps (250 ps), 32 beads, restart/traj every 1000 steps, filename TAFFI-RDF-32beads-prod, restarting from TAFFI-RDF-32beads-finalequil-2100000.xml.  
 \end{enumerate}
 
 

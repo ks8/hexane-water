@@ -2245,6 +2245,96 @@ In fact, to make sure that we do not have a nucleation event after a certain amo
 \item 3.  We previously had difficulty starting a simulation of TAFFI hexane at a specified density.  The only way it seemed to work was through a lattice approach, where density was then achieved through a gradual relaxation.  What we need is the ability to do a restart PI simulation using TAFFI-hexane.py in dash\_work/hexane, so let's finish that up first.  Then we can do this shit!  Had to put in, specifically hardcoded, all of the nonbonded interactions in order to get the restart file to work in TAFFI-hexane.py.  Now that restart is working we will do the following.  We ran 216 hexane molecules, NPT T = 298 K P = 1.0 atm, initial lattice configuration, 1 bead, 2M steps (2 ns), recording every 10,000 steps, filename TAFFI-RDF-32beads-equil.  It had a final density of approx. 0.6596.  So, we will restart from TAFFI-RDF-32beads-equil2000000.xml, but this time we will do 100,000 steps (100 ps), NVT 298 K, 32 beads, recording restart/traj every 10,000 steps, filename TAFFI-RDF-32beads-finalequil, data every 100, restarting from TAFFI-RDF-32beads-equil2000000.xml.  INTERESTING PROBLEM: when we do the restart, since we are restarting from 1 bead, it doesn't actually transform to 32 beads.  so as a temporary measure, we are going to add preparePIMD in restart then remove immediately.  Now that this run is finished, we will do the following.  NVT 298 K, 250,000 steps (250 ps), 32 beads, restart/traj every 1000 steps, filename TAFFI-RDF-32beads-prod, restarting from TAFFI-RDF-32beads-finalequil-2100000.xml.  
 \end{enumerate}
 
+\section{7/23/2018}
+\begin{enumerate}
+\item The T = 265 K, 260, and 255 for 32 beads stopped from time limit.  Restarting them now.  full-265-32bead finished 3138900 turns, which means that it recorded 3130000 turns since we are recording every 10,000, which means it has 3870000 turns left to get to 7M.  So, on run\_UPDATE.py which does interface\_UPDATE.py, we are going to do filename full-265-32bead-restart1,  0 steps equilibration, 3870000 steps production, NVT at T = 265 K, 32 beads, recording pressure every 20 turns, recording restart/traj every 10,000 steps, zero change to zlo or zhi boundaries, restarting from full-265-32bead\_3130000.xml.  Running now. 
+\item The T = 260 K 32 beads finished 3076000 turns, which means it recorded 3070000 turns, which means it has 3930000 turns left.  So, as above, we are going to do filename full-260-32bead-restart1, 0 equil steps, 3930000 production steps, NVT at T = 260 K, 32 beads, pressure every 20 steps, restart/traj every 10,000 steps, zero change to z boundaries, restarting from full-260-32bead\_3070000.xml.  Running now.  
+\item The T = 255 K 32 bead finished 3162600 turns, so it recorded 3160000 turns, and has 3840000 turns left.  So, as above, we are doing filename full-255-32bead-restart1, 0 equil, 3840000 NVT at T = 255 K, 32 beads, press every 20, restart/traj every 10K, zero z bound change, restarting from full-255-32bead\_3160000.xml.  Running now.  
+\item Mike: section 12.3 in Tuckerman explains why we can't compute pressure with 32 beads.  Currently, DASH computes atomic virials.  However, the estimator for pressure needs to include within-bead interaction terms, which is not in DASH at the moment.  PIMC not need to integrate equations of motion every timestep and compute atomic virials, so it is both a simpler implementation and possible a faster one as well.  
+\item Now, we are going to deal with data that we have generated.  We will start by computing 1bead properties (ALL properties) for full-265-1bead, full-260-1bead, and full-255-1bead.  This is what I am going to work on until I am finished.  Using density\_analysis.sbatch to run density\_profile\_postproduction\_PI\_largefile\_UPDATE.py.  filename will be full-265-1bead-2000bins, -traj\_file is full-265-1bead.xyz, -num\_atoms=24600, -nBeads=1,   -num\_bins=2000.  This is running now.  We are going to do the exact same analysis for the other temperatures.  
+\item Now, we download the densities\_water and densities\_hexane files to laptop, interface folder, and use density\_profile\_analysis\_UPDATE.py, zlen 149.2717, 1 bead, filename full-265-1bead, indices 100 to 700, z indices 600 to 800, hexane 1100 to 1240:
+
+\item 265K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.997396552864  +/- 0.000632268722359 \\
+\text{bulk hexane density: } 0.695580601762  +/- 0.000669093586529\\
+\text{block-averaged intrinsic width: }  0.465983490036 +/- 0.00780701687952\\
+\text{block-averaged thermal width: } 1.4088913415  +/- 0.0402255477131 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-265-1bead}
+\end{figure}
+
+\item For 260 density profile, we do the same thing as above, but with filename 260.  
+
+\item 260K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.992589502464  +/- 0.000283479700921 \\
+\text{bulk hexane density: } 0.701500660506  +/- 0.000587245572858\\
+\text{block-averaged intrinsic width: }  0.450103349835 +/- 0.0138366157202\\
+\text{block-averaged thermal width: } 1.38251192685  +/- 0.0628599538632 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-260-1bead}
+\end{figure}
+
+Similar to the above:
+
+\item 255K: 
+
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.993702970776  +/- 0.000750599648099 \\
+\text{bulk hexane density: } 0.706655893546  +/- 0.000395198493511\\
+\text{block-averaged intrinsic width: }  0.441705382549 +/- 0.00958009277706\\
+\text{block-averaged thermal width: } 1.31925826368  +/- 0.045069891451 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-255-1bead}
+\end{figure}
+
+\item Now running orientation\_postproduction.sbatch, which runs molecular\_orientation\_water\_postproduction\_UPDATE.py, traj file full-265-1bead.xyz, num atoms 24600, 1 bead, filename full-265-1bead-orientations-water, 2000 bins.  Same for other temperatures. Downloading to laptop. Using orientation\_profile\_analysis\_UPDATE.py.  
+
+\item 265 K, z range between 700 and 980, indices 100 to 700, 1 bead, full-265-1bead-orientations-water, 6 blocks.  
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-265-1bead-orientations-water}
+\end{figure}
+
+\item 260 K, same parameters as above
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-260-1bead-orientations-water}
+\end{figure}
+
+\item 255 K, same above 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{full-255-1bead-orientations-water}
+\end{figure}
+
+\item Now using orientation\_postproduction\_hexane.sbatch to run molecular\_orientation\_hexane\_postproduction\_UPDATE.py, traj file full-265-1bead.xyz, 24600 atoms, 14600 water atoms, 500 hexane molecules, 1 bead, filename full-265-1bead-orientations-hexane, 2000 bins. Same for other temps.  
+
+\item Running 1bead and 32bead simulations of temperatures 245 and 240 for good measure.  Similar filenames etc as above.  NOTE: just realized that I only collected every 10,000 steps here, not every 1,000! damn...SO, now running full-245-1bead, 1M equil and 6M prod NVT at 245 K, no PI (1 bead), pressure every 20, restart/traj every 1000, no restart.  Same for 240.  Also doing 32 beads for each, recording restart/traj every 10,000 steps, 32 beads.  
+
+
+\end{enumerate}
 
 
 

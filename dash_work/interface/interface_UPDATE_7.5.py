@@ -18,8 +18,8 @@ import random
 import math
 
 # Set the DASH build to be used
-sys.path = sys.path + ['/home/swansonk1/NEW_DASH/md_engine/build/python/build/lib.linux-x86_64-2.7']
-sys.path.append('/home/swansonk1/NEW_DASH/md_engine/util_py')
+sys.path = sys.path + ['/home/swansonk1/NEW_DASH_7.5/md_engine/build/python/build/lib.linux-x86_64-2.7']
+sys.path.append('/home/swansonk1/NEW_DASH_7.5/md_engine/util_py')
 
 # Import DASH packages
 from DASH import *
@@ -36,7 +36,7 @@ def create_parser():
     parser.add_argument('-water_restart_file', dest='water_restart_file', default=None, help='Name of water DASH restart xml file')
     parser.add_argument('-hexane_restart_file', dest='hexane_restart_file', default=None, help='Name of hexane LAMMPS input file')
     parser.add_argument('-hexane_settings_file', dest='hexane_settings_file', default=None, help='Name of hexane LAMMPS settings file')
-    parser.add_argument('-equil_ensemble', dest='equil_ensemble', default='NPT', help='Thermodynamic ensemble for equilibration steps')    
+    parser.add_argument('-equil_ensemble', dest='equil_ensemble', default='NPT', help='Thermodynamic ensemble for equilibration steps')
     parser.add_argument('-nSteps_equilibration', dest='nSteps_equilibration', default=0, help='Number of equilibration steps')
     parser.add_argument('-prod_ensemble', dest='prod_ensemble', default='NVT', help='Thermodynamic ensemble for production steps')
     parser.add_argument('-nSteps_production', dest='nSteps_production', default=0, help='Number of production steps')
@@ -67,7 +67,7 @@ def convert_args(args):
     files['water_restart_file'] = args.water_restart_file
     files['hexane_restart_file'] = args.hexane_restart_file
     files['hexane_settings_file'] = args.hexane_settings_file
-    files['restart_file'] = args.restart_file 
+    files['restart_file'] = args.restart_file
 
     options = {}
     options['equil_ensemble'] = args.equil_ensemble
@@ -142,7 +142,7 @@ def process_datafile(files, options):
 
 	if restart:
 
-		# Set up initial DASH specifications  
+		# Set up initial DASH specifications
 		state = State()
 		state.deviceManager.setDevice(0)
 		state.rCut = 12.0
@@ -153,12 +153,12 @@ def process_datafile(files, options):
 		state.dt = 0.5
 		the_temp = T
 
-		# Set atomic type labels 
+		# Set atomic type labels
 		oxygenHandle = 'OW'
 		hydrogenHandle = 'HY'
 		mSiteHandle = 'M'
 
-		# Adjust the temperature for path integral simulation if specified 
+		# Adjust the temperature for path integral simulation if specified
 		if PI:
 			the_temp *= nBeads
 
@@ -168,7 +168,7 @@ def process_datafile(files, options):
 		# Iterate to the last (most recent) configuration in the xml file
 		state.readConfig.prev()
 
-		# Add fixes 
+		# Add fixes
 		ljcut = FixLJCut(state, 'ljcut')
 		bondHARM = FixBondHarmonic(state, 'bondHARM')
 		angleHARM  = FixAngleHarmonic(state, 'angleHARM')
@@ -180,7 +180,7 @@ def process_datafile(files, options):
 		fixPressure = FixPressureBerendsen(state, 'npt', P, 1000, 5)
 
 		# Activate fixes
-		state.activateFix(ljcut)	
+		state.activateFix(ljcut)
 		state.activateFix(bondHARM)
 		state.activateFix(angleHARM)
 		state.activateFix(dihedralOPLS)
@@ -205,7 +205,7 @@ def process_datafile(files, options):
 		charge.setError(0.01,state.rCut,3)
 		fixNVT.setParameters(10)
 
-		# Set LJ parameters for atom types from the hexane LAMMPS file 
+		# Set LJ parameters for atom types from the hexane LAMMPS file
 		epsilon_lmps_0 = 0.018252
 		sigma_lmps_0 = 2.467643
 		epsilon_lmps_1 = 0.010204
@@ -258,7 +258,7 @@ def process_datafile(files, options):
 		# Initialize the system at the specified temperature
 		InitializeAtoms.initTemp(state, 'all', the_temp)
 
-		# Initialize a path integral simulation if specified 
+		# Initialize a path integral simulation if specified
 		if PI:
 			state.nPerRingPoly = nBeads
 
@@ -266,7 +266,7 @@ def process_datafile(files, options):
 		if record_traj:
 			writeconfig = WriteConfig(state, handle='writer', fn=filename, writeEvery=trajFreq, format='xyz')
 			state.activateWriteConfig(writeconfig)
-			
+
 
 		# Record restart xml files if specified
 		if record_restart:
@@ -456,7 +456,7 @@ def process_datafile(files, options):
 	# List to hold water atomic positions
 	coordinates_water = []
 
-	# Add atomic water positions to list 
+	# Add atomic water positions to list
 	for i in range(int(num_atoms/atoms_per_molecule)):
 
 		molecule = []
@@ -502,7 +502,7 @@ def process_datafile(files, options):
 			coordinates_water[i, j, :] = string_contents
 
 
-	# Set up initial DASH specifications  
+	# Set up initial DASH specifications
 	state = State()
 	state.deviceManager.setDevice(0)
 	state.rCut = 12.0
@@ -513,7 +513,7 @@ def process_datafile(files, options):
 	state.dt = 0.5
 	the_temp = T
 
-	# Set atomic type labels and add atom types 
+	# Set atomic type labels and add atom types
 	oxygenHandle = 'OW'
 	hydrogenHandle = 'HY'
 	mSiteHandle = 'M'
@@ -521,11 +521,11 @@ def process_datafile(files, options):
 	state.atomParams.addSpecies(handle=hydrogenHandle, mass=1.0074, atomicNum=1)
 	state.atomParams.addSpecies(handle=mSiteHandle,mass=0.0,atomicNum=0)
 
-	# Adjust the temperature for path integral simulation if specified 
+	# Adjust the temperature for path integral simulation if specified
 	if PI:
 		the_temp *= nBeads
 
-	# Add fixes 
+	# Add fixes
 	ljcut = FixLJCut(state, 'ljcut')
 	bondHARM = FixBondHarmonic(state, 'bondHARM')
 	angleHARM  = FixAngleHarmonic(state, 'angleHARM')
@@ -537,7 +537,7 @@ def process_datafile(files, options):
 	fixPressure = FixPressureBerendsen(state, 'npt', P, 1000, 5)
 
 	# Activate fixes
-	state.activateFix(ljcut)	
+	state.activateFix(ljcut)
 	state.activateFix(bondHARM)
 	state.activateFix(angleHARM)
 	state.activateFix(dihedralOPLS)
@@ -585,7 +585,7 @@ def process_datafile(files, options):
 	reader = LAMMPS_Reader(state=state, setBounds=True, nonbondFix = ljcut, bondFix = bondHARM, angleFix = angleHARM, dihedralFix = dihedralOPLS, atomTypePrefix = 'lmps_')
 	reader.read(dataFn = files['hexane_restart_file'], inputFns = [files['hexane_settings_file']])
 
-	# Set LJ parameters for atom types from the hexane LAMMPS file 
+	# Set LJ parameters for atom types from the hexane LAMMPS file
 	epsilon_lmps_0 = 0.018252
 	sigma_lmps_0 = 2.467643
 	epsilon_lmps_1 = 0.010204
@@ -690,9 +690,9 @@ def process_datafile(files, options):
 			if z_pos < bounds_zlo:
 				bounds_zlo = z_pos
 
-	# Adjust the initial bounds if specified 
+	# Adjust the initial bounds if specified
 	bounds_zlo = bounds_zlo + zlo_change
-	bounds_zhi = bounds_zhi + zhi_change 	
+	bounds_zhi = bounds_zhi + zhi_change
 
 	# Set the simulation bounds
 	loVector = Vector(bounds_xlo, bounds_ylo, bounds_zlo)
@@ -702,7 +702,7 @@ def process_datafile(files, options):
 	# Initialize the system at the specified temperature
 	InitializeAtoms.initTemp(state, 'all', the_temp)
 
-	# Initialize a path integral simulation if specified 
+	# Initialize a path integral simulation if specified
 	if PI:
 		state.nPerRingPoly = nBeads
 		state.preparePIMD(the_temp)
@@ -752,26 +752,26 @@ def process_datafile(files, options):
 		output = open('pressure_scalar-'+filename+'.txt','a')
 		output.write(str(dataPressureScalar.vals[-1]) + '\n')
 		output.close()
-		
+
 	# Construct density profile python operation
 	pressureOperation = PythonOperation(handle = 'pressureOp', operateEvery = dataFreq, operation = pressure_recording, synchronous=True)
 
 	state.activatePythonOperation(pressureOperation)
 
-	# Equilibration run 
+	# Equilibration run
 	if nSteps_equilibration > 0:
 
-		# Set up appropriate ensemble and run 
-		if equil_ensemble == 'NVT':			
+		# Set up appropriate ensemble and run
+		if equil_ensemble == 'NVT':
 			state.deactivateFix(fixPressure)
 		elif equil_ensemble == 'NPT':
 			state.activateFix(fixPressure)
 		integVerlet.run(nSteps_equilibration)
 
-	# Production run 
+	# Production run
 	if nSteps_production > 0:
 
-		# Set up appropriate ensemble and run 
+		# Set up appropriate ensemble and run
 		if prod_ensemble == 'NVT':
 			state.deactivateFix(fixPressure)
 		elif prod_ensemble == 'NPT':

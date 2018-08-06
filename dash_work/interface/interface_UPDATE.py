@@ -295,6 +295,7 @@ def process_datafile(files, options):
 
 			# Record pressure
 			dataPressureTensor = state.dataManager.recordPressure(handle='all', mode='tensor', interval=ptensorFreq)
+			dataPressureScalar = state.dataManager.recordPressure(handle='all', mode='scalar', interval=ptensorFreq)
 
 			# Set up appropriate ensemble and run 
 			if prod_ensemble == 'NVT':
@@ -310,6 +311,12 @@ def process_datafile(files, options):
 				output.write(str(tensors[0]) + '\t')
 				output.write(str(tensors[1]) + '\t')
 				output.write(str(tensors[2]) + '\n')
+			output.close()
+
+			# Print list of pressures
+			output = open('pressure_scalar-'+filename+'.txt','w')
+			for scalars in dataPressureScalar.vals:
+				output.write(str(scalars) + '\n')
 			output.close()
 
 		# Write final configurations
@@ -720,14 +727,16 @@ def process_datafile(files, options):
 
 		# Record pressure
 		dataPressureTensor = state.dataManager.recordPressure(handle='all', mode='tensor', interval=ptensorFreq)
+		dataPressureScalar = state.dataManager.recordPressure(handle='all', mode='scalar', interval=ptensorFreq)
 
 		# Set up appropriate ensemble and run 
 		if prod_ensemble == 'NVT':
 			state.deactivateFix(fixPressure)
-			integVerlet.run(nSteps_production)
+
 		elif prod_ensemble == 'NPT':
 			state.activateFix(fixPressure)
-			integVerlet.run(nSteps_production)
+
+		integVerlet.run(nSteps_production)
 
 		# Print list of pressures
 		output = open('pressure_tensors-'+filename+'.txt','w')
@@ -735,6 +744,12 @@ def process_datafile(files, options):
 			output.write(str(tensors[0]) + '\t')
 			output.write(str(tensors[1]) + '\t')
 			output.write(str(tensors[2]) + '\n')
+		output.close()
+
+		# Print list of pressures
+		output = open('pressure_scalar-'+filename+'.txt','w')
+		for scalars in dataPressureScalar.vals:
+			output.write(str(scalars) + '\n')
 		output.close()
 
 	# Write final configurations

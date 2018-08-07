@@ -1490,6 +1490,7 @@ Using 200 ps blocks, which is in line with the literature, appears to be a reaso
 \subitem Read Markland papers, and ion stuff?  solid water interfaces?
 \subitem Patel says that bulk densities were obtained from fits to the individual liquid density profiles...we could try that
 \subitem Whey are there ANY values of water orientation, say, inside the hexane region??
+\subitem Finish running iso-test-big in /project/depablo/kswanson/hexane-water/dash\_work/water to a total of 10 ns to check density.  
 \subitem URGENT: Confirm that pure TIP4P/F water with 1 bead and 32 beads has a non-ice RDF.  Also confirm this for TAFFI hexane.  Make it clear on the data table slide that Patel and Brooks implemented a different model.  Put simulation values on slide 16 for densities, as well as experimental.  Compute 1 bead MC Barostat density, check 8, 16, 32 beads, to see what is going on here.  Do a brute force pressure calculation to find pressure of the NVT systems (can only do this for 1 bead) to check what pressure we are computing values at.  Characterize everything in NPT to show full proof of concept.  Run at more temperatures to see that the difference in intrinsic widths does not jump at 250.  UNDERSTAND why computing the pressure is important?  Understand why we can't compute pressure currently with PIMD.  Use OPLS/LAMMPS to compute the RDF for hexane, and use THAT to compare to TAFFI hexane and also show that low temperature hexane is fine.  Do the NVT system using a restricted V, compute pressure, then expand V (32 beads) until we get P = 1.0 atm....brute force way of achieving the appropriate density of the system without extra vacuum.  (1) mixed time slicing and (2) GC-AdResS.  Test Mike's new RDF calculator.  Use Martyna PIMD paper from Mike (see slack) to test barostat.  Convert widths to 10-90 widths.  
 
 \item Today, we will start by checking the 32 bead calculations at a variety of temperatures to see if they finished running.  They did not finish running, only got about 60\% through the production run.  So, we should try to do a restart of these simulations using their last saved restart file.  We may have to add restart capability to the file used to simulate these runs, interface\_UPDATE.py.  We will also check that the simulation will simply continue to add to the already-existant .xyz file, so that we don't lose information. 
@@ -2417,19 +2418,332 @@ Monitoring the influence of H-bonds on particular interfacial water molecules al
 \end{figure}
 Now running pressure\_analysis\_UPDATE.py -pressure\_file=pressure\_scalar-press-198-1bead.txt -index\_start=1 -index\_end=6000000 -num\_SE\_blocks= 100.  So, using 100 blocks of size 30 ps, we get an average pressure of -69.85286411 with a standard error of 0.75648606.  Now downloading the tensor data, pressure\_tensors-press-298-1bead.txt.  Result is around 40, with a SE of 30 -- so it appears we do need more independent runs for smaller SE value, as with former NPT runs.  So, what gives with negative pressure?  Now, to check this average pressure, we are running filename press-298-1bead-restart1, 0 equil NVT steps, 6M production NVT steps at 298 K, no beads, press every 1, waldman, restart/traj every 500,000, no z change, restart from press-298-1bead\_6000000.xml.   
 \item Checking out Mike's new RDF calculator.  in project directory, for\_kirk\_rdf/NEW\_RDF.  from hexane-water/dash\_work/water/RDF-new/, copying cmd\_read\_subs.o and cmd\_read\_subs.mod.  then ran bash compile.sh.  Also copying sys.RDF-tip4pF-32bead-1000.data.txt.  Now we want to generate just a few snapshots from a 32bead 1000 water molecule simulation.    Using run3.sh in dash\_work/water, we run filename RDF-NEW, 1000 waters, 50,000 steps, NVT at 235 K, initial 0.983 density, 32 beads, record every 10,000 steps.  Taking the resulting RDF-NEW-10000.xyz file and copying to for kirk folder.  Ok, Mike made changes which now allow the program to work.  Trying this on the interfacial system.  We should have the restart file full-235-32bead-part21800000.xml.  Let's use this to check just a few frames, say 10, for the O-O RDF.  filename RDF-235-32bead-interface, 1000 steps, recording every 100 steps.  Copying RDF-235-32bead-interface.xyz and RDF-235-32bead-interface\_1801000.xml to /project/depablo/kswanson/for\_kirk\_rdf/NEW-RDF.  
-\item Checking out OpenMM now. Markland page says ring polymer contraction approach included in OpenMM which can be used to obtain significant speed-ups.  "Examples showing how to use this feature will be provided as soon as we have time."  On /home/swansonk1, module load Anaconda3, conda install -c omnia openmm.  Concerned about changing packages...so created openmm-env virtual environment in /home/swansonk1, and then retrying the download.  Stuff downloaded. Then typed python -m simtk.testInstallation: There are 3 Platforms available: 1 Reference, successful, 2, CPU, successful, 3 OpenCL - error.  Perhaps I need to do this on gpu.  Worked!  on depablo-gpu, all three were successful.  Ok, now we're rolling...Downloaded pimd.zip, put on /home/swansonk1/, ran unzip pimd.zip, and then the files were laid out in /home/swansokn1.  Created a folder, openmm, with these files.  Ok we are running tests using the following: OpenMM: 1000 TIP4P/F molecules, rcut 0.9 nm, PME for nonbonded, 300 K, configuration printed every 100 steps, 20,000 steps of length 0.5 fs, recording temperature every 50 steps.  DASH: 1000 TIP4P/F molecules, rcut 0.9 nm, Ewald, 300 K, trajectory printed every 100 steps, 20,000 steps of length 0.5 fs, recording temperature every 50 steps.  
-\subitem On Midway-l13b-23
+\item Checking out OpenMM now. Markland page says ring polymer contraction approach included in OpenMM which can be used to obtain significant speed-ups.  "Examples showing how to use this feature will be provided as soon as we have time."  On /home/swansonk1, module load Anaconda3, conda install -c omnia openmm.  Concerned about changing packages...so created openmm-env virtual environment in /home/swansonk1, and then retrying the download.  Stuff downloaded. Then typed python -m simtk.testInstallation: There are 3 Platforms available: 1 Reference, successful, 2, CPU, successful, 3 OpenCL - error.  Perhaps I need to do this on gpu.  Worked!  on depablo-gpu, all three were successful.  Ok, now we're rolling...Downloaded pimd.zip, put on /home/swansonk1/, ran unzip pimd.zip, and then the files were laid out in /home/swansokn1.  Created a folder, openmm, with these files.  Ok we are running tests using the following: OpenMM: 1000 TIP4P/F molecules, rcut 0.9 nm, PME for nonbonded, 300 K, configuration printed every 100 steps, 20,000 steps of length 0.5 fs, recording temperature every 50 steps.  DASH: 1000 TIP4P/F molecules, rcut 0.9 nm, Ewald, 300 K, trajectory printed every 100 steps, 20,000 steps of length 0.5 fs, recording temperature every 50 steps.  NOTE: realized that temp is printed every step for OpenMM for this first dataset below.  Fixed for second dataset. 
+\subitem On Midway-l13b-23 for OpenMM
 \subitem 32 beads: 217.42 s
 \subitem 16 beads: 126.18 s
 \subitem 8 beads: 79.64 s
-\subitem 4 beads: 
-\subitem 1 bead: 
+\subitem 4 beads: 52.63 s
+\subitem 1 bead: 28.966 s
+for DASH
+\subitem 32 beads: 241.90 s
+\subitem 16 beads: 138.62 s
+\subitem 8 beads: 82.39 s
+\subitem 4 beads: 52.20 s
+\subitem 1 bead: 65.46 s
+
+for 40,000 steps:
+
+\subitem On Midway-l13b-23 for OpenMM
+\subitem 32 beads: 409.06 s
+\subitem 16 beads: 228.54 s
+\subitem 8 beads: 138.12 s
+\subitem 4 beads: 83.84 s
+\subitem 1 bead: 34.63 s
+for DASH
+\subitem 32 beads: 473.8
+\subitem 16 beads: 278.28
+\subitem 8 beads: 160.45 s
+\subitem 4 beads: 105.03 s
+\subitem 1 bead: 128.14 s
+
+Now let's try not printing a configuration whatsoever, 20,000 steps., and OpenMM also printing steps, every 50 steps ALSO found init density was .977 instead of .997, so we are making sure it is .997 here for DASH: 
+
+OpenMM:
+\subitem 32 beads: 193.88 s
+\subitem 16 beads: 104.34 s
+\subitem 8 beads: 60.15 s
+\subitem 4 beads: 32.64 s
+\subitem 1 bead: 7.00 s
+
+DASH:
+\subitem 32 beads: 129.16 s
+\subitem 16 beads: 86.98 s
+\subitem 8 beads: 53.29 s
+\subitem 4 beads: 37.8 s
+\subitem 1 bead: 61.16 s
+\subitem PI false: 61.19 s
+
+\end{enumerate}
+
+\section{7/26/2018}
+\begin{enumerate}
+
+\item Talked to Phil.  If we go from an NVT with no vacuum to an NVT with vacuum, we add two interfaces -- this will naturally change the pressure of the system, and make it hard to interpret what's going on.  So, I think it's not to worry.  In a real system, we would be extremely far away from the interface, so the ambient pressure measurement would not be perturbed by the interface.  
+\item full-245-32bead ran for 2944000 production steps, so it recorded 2940000 and needs 4060000 more.  So, we are going to run filename full-245-32bead-restart1, 0 equil, 4060000 NVT production at 245 K, 32 beads, press every 20, waldman, restart/traj every 10000, no z change, restarting from full-245-32bead\_2940000.xml.  
+\item full-240-32bead ran for 2950100 steps, recorded 2950000, and needs 4050000 more.  So, we will run similar to above. Had issue with restart file, so starting from 2940000 and doing 4060000 steps instead.  
+\item Let's start today with analysis of new temperatures.  We will do the 32 bead versions of 265, 260, and 255 K.  First, we need to combine trajectory files.  So, we will create combined files called full-265-32bead-combined.xyz.    Using density\_analysis.sbatch to run filename full-265-32bead-combined-2000bins etc.  Using orientation\_postproduction.sbatch for water and orientation\_postproduction\_hexane.sbatch for hexane.  Downloading densities files to laptop.  
+T = 265 K:
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.993944675708  +/- 0.000836013278664 \\
+\text{bulk hexane density: } 0.672308982902  +/- 0.00120679809886\\
+\text{block-averaged intrinsic width: }  0.494117436055 +/- 0.0107178686707\\
+\text{block-averaged thermal width: } 1.34209565305  +/- 0.0212005347869 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-265-32bead-combined}
+\end{figure}
+
+
+
+T = 260 K:
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.994908927089  +/- 0.000244162029898 \\
+\text{bulk hexane density: } 0.669809976136  +/- 0.0032578835839\\
+\text{block-averaged intrinsic width: }  0.446998976876 +/- 0.00957132220621\\
+\text{block-averaged thermal width: }  1.37610785096  +/- 0.0285750922494 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-260-32bead-combined}
+\end{figure}
+
+
+T = 255 K:
+\begin{align}
+\begin{split}
+\text{bulk water density: } 0.993314912015  +/- 0.000527556565127 \\
+\text{bulk hexane density: } 0.687231477136  +/- 0.000474182693363\\
+\text{block-averaged intrinsic width: }  0.443158803887 +/- 0.0102334762869\\
+\text{block-averaged thermal width: }  1.45812829149  +/- 0.0607972461947 \\
+\end{split}
+\end{align} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{interface_density_profile_full-255-32bead-combined}
+\end{figure}
+
+Results for intrinsic width:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{intrinsic-width-32bead-vs-1bead-7-26-2018-lines}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{intrinsic-width-32bead-vs-1bead-7-26-2018-points}
+\end{figure}
+
+\item From Markland: The melting temperature of the q-TIP4P/F model obtained from our coexistence simulations of the ice-water interface was found to be 251 +/- K, around 22 K lower than the experimental value.  The larger error bars associated with this value are a result of the slower motion at such low temperatures, which increases the time scale required to observe melting or ice lattice formation at the interface.  Earlier: The melting point calculations...were done by performing direct coexistence simulations of the water-ice interface under atmospheric pressure.  Initial hexagonal ice configurations were generated by placing the oxygen atoms at their crystallographic sites...H atoms placed so that the total dipole moment of the simulation cell was exactly zero.  The initial ice configuration was then equilibrated in the presence of an Andersent thermostat and isotropic Berendsen barostat before placing the secondary prismatic face of the ice cell in contact with an equilibrated water simulation.  360 molecules in ice phase, 336 in liquid phase.  Monitored extent of melting or freezing.  PERHAPS DO MUCH LONGER SIMULATIONS AT LOWER TEMPERATURES TO SHOW lower error bars?
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{surfacetension_heavylight}
+\end{figure}
+
+\end{enumerate}
+
+\section{7/27/2018}
+\begin{enumerate}
+\item Pressure estimator of PIMD in 1 dimension:
+\begin{align}
+\begin{split}
+P_P(x_1,...,x_P) = \frac{P}{\beta L} - \frac{1}{L}\sum_{k = 1}^P\left[\frac{mP}{\beta^2\hbar^2}(x_{k+1} - x_k)^2 + \frac{1}{P}x_k\frac{\partial U}{\partial x_k} \right]
+\end{split}
+\end{align}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{thermal-width-32bead-vs-1bead-7-27-2018}
+\end{figure}
+
+\end{enumerate}
+
+\section{7/28/2018}
+\begin{enumerate}
+\item 
+\begin{align}
+\begin{split}
+\gamma = \frac{L_z}{2}\left[\left<P_{zz}\right> - \frac{1}{2}(\left<P_{xx}\right> + \left<P_{yy}\right>)\right]
+\end{split}
+\end{align}
+
+\begin{align}
+\begin{split}
+\gamma = \frac{1}{2}\int_{-L_z/2}^{L_z/2}dz\left[P_N(z) - P_T(z)\right]
+\end{split}
+\end{align}
+
+\begin{align}
+\begin{split}
+S_{ZZ} = \frac{1}{2}\left<3\text{cos}^2\theta - 1\right>
+\end{split}
+\end{align}
+
+$C_6H_{14}$
+$H_2O$
 
 
 
 \end{enumerate}
 
 
+\section{7/30/2018}
+\begin{enumerate}
+\item We need to fix everything by unwrapping molecules from the trajectory file.  Perhaps we can first do this unwrapping process in a separate file so that we do not need to change any of our analysis code.  
+\item Checking vacuum-water-hexane-vacuum pressures by running five different 1 bead simulations called press-NVT-expanded-1, press-NVT-expanded-2, press-NVT-expanded-3, ..., -5.  Also running simulations using no vacuum, called press-NVT-1, press-NVT-2, etc.  
+\end{enumerate}
+
+\section{7/31/2018}
+\begin{enumerate}
+\item Fixed orientation by properly unwrapping molecules.  
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{unwrap}
+\end{figure}
+\item Al of the above runs stopped short for some random error, python :: boost :: error already set.  Trying press-NVT-expanded-1 again with recording pressure every 10 steps and also in restart included full pressure recording. 
+\end{enumerate}
+
+\section{8/1/2018}
+\begin{enumerate}
+\item Running press-NVT-expanded-1-restart-1, which restarted from press-NVT-expanded-1\_1000000.xml.  
+\item Created hexane-RDF.py, which stripped interface\_UPDATE.py of its water component.  Weirdly, the xyz file only had 6's and 1's, for C and H, whereas in the interface .xyz, we have atom types 3, 4, 5, 6, 7 for the hexane component.  I wonder what makes the difference here?  Regardless, having only 6s and 1s is actually good and should make it easier for us to actually compute RDFs in the first place.  So, we will use this hexane-RDF.py file, in the interface folder, to compute RDF.  From the 500 molecule restart, we are going to do 32 beads, NVT, 100,000 steps (50 ps) filename hexane-RDF-32bead, using run\_RDF.sh.  Using this, we will compute the C-C, C-H, and H-H RDFs.  We then need to compare this to OPLS hexane.  
+\item Doing a run: filename fulldata-NPT-298, 1M NPT steps at 298 K and 1 atm, 6M NPT steps at 298 K and 1 atm, restart/traj every 1000, 0 z change, no PI.  
+\item Let's also compare our pressure computation to that from LAMMPS.  We are in lammps\_work/interface, using interface.sbatch to run in.taffi\_tip4p, which uses the input coordinate file input\_restart\_taffi\_tip4pF\_modified.txt.  We will first start by creating a new coordinate file, input\_restart\_taffi\_tip4pF\_modified\_expanded.txt, in which we expand the x dimension by 20 Angstroms on both sides to recreate the DASH version.  Currently running filename  lammps-press-NVT-expanded, printing pressures every 10 steps to pressures.txt, 2M steps, 298 K.  
+\item In for\_kirk\_rdf/NEW\_RDF, created dash\_restart\_to\_lammps\_RDF\_hexane.py, using hexane-RDF-1bead\_100000.xml, hexane-RDf-1bead.xyz.  Trying running.  Unclear what to do about atom types.  
+\end{enumerate}
+
+\section{8/2/2018}
+\begin{enumerate}
+\item We will start today with full pressure analysis from our two NVT expanded systems: press-NVT-expanded-1-restart1 and press-298-1bead.  The first has pressure values recorded every 10 steps (600,000 entries), the second has pressure values recorded every single step (6M entries).   The pressure files are called, respectively, pressure\_scalar-press-NVT-expanded-1-restart-1.txt and pressure\_scalar-press-298-1bead.txt.  We will start by downloading both of these to laptop, to the dash\_work/interface folder.  Now, we will use the script pressure\_analysis\_UPDATE.txt to analyze these files.  Since we already have complete analysis for press-298-1bead, where SE analysis uncovered that block size of 30 ps was optimal, we will again break up our simulation into 100 blocks and report this value for NVT-expanded-1-restart1.  We get an average pressure of -72.81847359 with a SE of 0.83416576 and a standard deviation of pressure values of 155.335449365.  Here is a plot of the values across all 600,000 recordings:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressures_press-NVT-expanded-1-restart1}
+\end{figure}
+For the lammps file, we have completed 57231 total steps (still in equilibration phase), so we will take the latter 50,000 of them and split into 8 blocks (giving block size of around 31 ps).  We get mean pressure of -81.52923691, SE of 3.93280857, SD of pressure values 154.848886252.  Here is a plot of the 50,000 values:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressures_lammps}
+\end{figure}
+Now, we will check the average pressure in a simple block of water, first on DASH, then in LAMMPS.  We will simulate 500 water molecules, 2M steps, NVT 298 K, 0.997 initial density, no PI, no recording of restart/traj, filename press-NVT-1bead-water.    
+
+\item C-C hexane RDF: 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{C_C-1bead-bonded-TAFFI-hexane-298-bin01}
+\end{figure}
+In /project/depablo/kswanson/hexane-water/dash\_work/interface, we use run\_RDF.sh to do run hexane-RDF.py, which will do 200,000 .5 fs steps at 298 K, NVT, recording every 1000 steps.  filename hexane-RDF-1bead-long.  We have, using bin 0.01:
+
+C-C
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{C_C-1bead-bonded-TAFFI-hexane-298-bin01-long}
+\end{figure}
+
+H-C (title is wrong)
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{C_H-1bead-bonded-TAFFI-hexane-298-bin01-long}
+\end{figure}
+
+H-H
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{H_H-1bead-bonded-TAFFI-hexane-298-bin01-long}
+\end{figure}
+
+Now that we have these results, let's do the same for OPLS in LAMMPS for comparison.  Going into /project/depablo/kswanson/hexane-water/lammps\_work/hexane and using in.hexane.   Ran 0.5 timestep, NPT at 298 K 1 atm, 500 hexanes, 200,000 steps.  Now, restarting from that, 200,000 NVT 298 K steps, filename RDF-OPLS-hexane-1bead-prod.    Running this now.  
+\item ERROR IN DASH: atoms.size() is used to compute the the ideal gas contribution to the pressure, which will cause an overestimation of the ideal gas component in DASH.  
+\end{enumerate}
+
+\section{8/3/2018}
+\begin{enumerate}
+\item OPLS in DASH: 
+C-C
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{C_C-1bead-bonded-OPLS-hexane-298-bin01}
+\end{figure}
+
+H-C (plot title is wrong)
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{C_H-1bead-bonded-OPLS-hexane-298-bin01}
+\end{figure}
+
+H-H
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{H_H-1bead-bonded-OPLS-hexane-298-bin01}
+\end{figure}
+
+\end{enumerate}
+
+\section{8/4/2018}
+\begin{enumerate}
+\item Ran tip4pF for 2M steps, 500 molecules, initial density of 0.997, 298 K, NVT, recording pressures every 10 steps.  File called pressure\_scalar-press-NVT-1bead-water.txt.  Downloaded to interface on laptop.  Using pressure\_analysis\_UPDATE.py, ran SE analysis on the section 2000, to 200,000 of the pressure recordings (large pressure spike at the beginning of the file).  Here is the plot:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressure_block_averaging_NVT-1bead-water}
+\end{figure}
+So we divide into 198 blocks of size 5 ps, because it appears that 1000 in the plot, which corresponds to 10,000 .5 fs, or 5000 fs, or 5 ps, is a good size.  The whole plot looks like:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressures_NVT-1bead-water-full}
+\end{figure}
+Leaving out the first 2000 steps, we get mean pressure of 176.988, SE 9.911, sd 1369.73.  
+\item in lammps\_work/water on midway, running in.water\_flexible, restarting from output\_water\_flexible\_preequil.txt, which had run 200,000 NPT steps at 300 K before.  Now, we are doing 2M NVT steps at 300 K, 3650 water molecules, printing pressures every 10 steps to pressure\_scalar-press-NVT-1bead-water-lammps.txt.  
+\item in dash\_work/water, running tip4pF3.py 500 molecules, 2M NPT steps 298 K 1 atm, no restart/traj, pressures every 10 steps.  filename press-NPT-1bead-water.  
+\item Visualized 1 bead expanded for a few steps: 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{visualize}
+\end{figure}
+No water vapor.  In fact, use PV=NkT.  Let P = 3200 Pa, vapor pressure of water at 298 K, T = 298 K, V = 50 Ang. x 50 Ang. x 50 Ang., k = 1.23*10-23 J/molecule * K.  Solve for N, we get 0.1, so less than one molecule approximately in a large vacuum box around our water molecules...we observe zero as expected.  We calculate the pressure using Antoine's equation.  For hexane, P = 20,000 Pa, giving us N = 0.6,  probably explains why we see a few more hexane molecules floating around.  
+\item Running press-NPT-1bead-water-highpress at 100 atm, similar to above, in dash.  
+\end{enumerate}
+
+\section{8/5/2018}
+\begin{enumerate}
+\item Downloading the lammps run, pressure\_scalar-press-NVT-1bead-water-lammps.txt to dsh\_work/interface file on laptop for analysis.  The full plot looks like:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressures_press-NVT-1bead-water-lammps-full}
+\end{figure}
+For consistency, we will do SE analysis by skipping the first 2000 points as before.  We get: 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressure_block_averaging_press-NVT-1bead-water-lammps}
+\end{figure}
+Similar to DASH, we see that 5 ps is appropriate so we divide into 198 blocks.  We get mean pressure of 85.206, SE of 2.418, sd of 512.248.   
+Here is what the plot looks like:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressures_press-NVT-1bead-water-lammps}
+\end{figure}
+\item Now, downloading pressure\_scalar-press-NPT-1bead-water, the 2M NPT run described above. 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressures_press-NPT-1bead-water}
+\end{figure} 
+\item Again, leaving out the first 2000 steps, our SE analysis:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressure_block_averaging_press-NPT-1bead-water}
+\end{figure} 
+Again using after 2000, we find 298 blocks to be good, giving us -3.66 mean pressure, SE 7.17 SE, and 1260 sd:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressures_press-NPT-1bead-water-shortened}
+\end{figure} 
+\item Now we downloaded pressure\_scalar-press-NPT-1bead-water-highpress.txt to laptop.  Here is full plot:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{pressures_press-NPT-1bead-water-highpress-full}
+Using similar 198 blocks, mean of pressure is 95.66, SE is 7, sd is 1274.  
+\end{figure} 
+\item fulldata-NPT-298 got canceled due to error already set at 2365000 steps, meaning it recorded 2360000 steps and needs 4640000 more steps.  So, restarting from fulldata-NP-298\_2360000.xml, filename fulldata-NP-298-restart1, no z change, restart/traj 10,000, pressure every 10, no PI, 4640000 NVT prod steps, 
+\end{enumerate}
 
 
 

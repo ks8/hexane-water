@@ -307,6 +307,12 @@ Combining the NPT steps into pressures\_scalar-newpress-nonexpanded-lammps-combi
 \centering
 \includegraphics[scale=0.7]{pressures_newpress-nonexpanded-lammps-combined}
 \end{figure}
+\item It is possible that we have differing values here because the volumes are slightly different.  To test the hypothesis that the vacuum is responsible for the negative pressure, let's try decreasing the volume by only putting 10 Angstroms on each side of the simulation box.  
+\item Simulation no. 11 in DASH will take care of this filename newpress-smallexpanded, and simulation no. 12 in LAMMPS will do the same. 
+\item Simulation no. 13 will be DASH 2M NPT of the interface
+\item Simulation no. 14 will be LAMMPS NPT of the interface
+\item Simulation no. 15 will be DASH 2M NVT at 0.997 of TIP4P/F 3650 molecules
+\item Simulation no. 16 will be 2M NPT at 1 atm of 3650 molecules in DASH
 \end{enumerate}
 
 

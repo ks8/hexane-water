@@ -253,6 +253,9 @@ Actually, would it even be incorrect to have four sites per atom?  Maybe that's 
 \item LAMMPS pressure computations:
 \subitem NVT with vacuum: interface.sbatch and in.taffi\_tip4pF\_waldman, x length 149.2717, y length 58.67825, z length 58.45467, 3650 TIP4P/F water molcules, 500 hexane molecules, waldman-hagler mixing, NVT with NoseHoover, 298 K, 1M steps equilibration and 1M steps production, PI false, restart/traj every 10,000, filename newpress-expanded-lammps.  We will start with 500,000 steps and restart from there, which is simulation no. 5. 
 \subitem Same as above, except we will not expand the box by 20 A in each z direction, and we will apply NPT equilibration for 1M steps and then 1M steps of NVT.  The first 500,000 steps will be simulation no. 7.  
+\subitem Simulation no. 8 is filename newpress-expanded-lammps-restart1, restarting from newpress-expanded-lammps.restart for 1.5M steps 
+\subitem Simulation no. 9 is filename newpress-nonexpanded-lammps-restart1, restarting from newpress-nonexpanded-lammps.restart for 500K steps
+\subitem Simulation no. 10 is filename newpress-nonexpanded-lammps-restart2, restarting from newpress-nonexpanded-lammps-restart1.restart, and going for 1M NVT steps.  
 \end{enumerate}
 
 

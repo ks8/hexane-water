@@ -258,5 +258,56 @@ Actually, would it even be incorrect to have four sites per atom?  Maybe that's 
 \subitem Simulation no. 10 is filename newpress-nonexpanded-lammps-restart2, restarting from newpress-nonexpanded-lammps-restart1.restart, and going for 1M NVT steps.  
 \end{enumerate}
 
+\section{8/8/2018}
+\begin{enumerate}
+\item From simulation no. 8, we use pressure\_analysis\_UPDATE.py on laptop in dash\_work/interface folder to analyze pressures\_scalar-newpress-expanded-lammps-restart.txt.  We use indices 50,000 to 150,000 and 100 SE blocks of size 5 ps.  This gives us a mean pressure of -83.443 atm, SE of the mean 1.578 atm, and SD of the distribution 154.699 atm.  Here is a plot of these values over time:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-expanded-lammps-restart1}
+\end{figure}
+\item From simulation no. 4, we use pressure\_analysis\_UPDATE.py on laptop in dash\_work/interface to analyze pressure\_scalar-newpress-expanded.txt.  We use indices 100,000 to 200,000 and 100 SE blocks of size 5 ps.  This gives us a mean pressure of -70.603 atm, SE of the mean 1.487 atm, and SD of the pressures 154.854.  Here is a plot:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-expanded}
+\end{figure}
+Removing the first 100 values for better comparison to the above plot, we have:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-expanded-clipped}
+\end{figure}
+\item If we combine pressures\_scalar-newpress-expanded-lammps.txt and pressures\_scalar-newpress-expanded-lammps-restart1.txt, then we have all 2M steps covered.  We call this file pressures\_scalar-newpress-expanded-lammps-combined.txt.  Analyzing all points in this file, using 200 blocks of size 5 ps, we get an average pressure of -80.945, SE of the mean 1.237, and SD of values 156.056:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-expanded-lammps-combined}
+\end{figure}
+\item Using all values from pressures\_scalar-newpress-expanded.txt from DASH, using 200 blocks as well, we get a mean pressure of -77.716, SE of the mean 1.337, and SD of values 155.610:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-expanded-full}
+\end{figure}
+\item Andersen Thermostat: Rescales velocities at regular timesteps to control the temperature
+\item NoseHoover Thermostat: Integrates equations of motion derived from a Hamiltonian that has an extra degree of freedom for the heat bath
+\item From simulation no. 6, in DASH, we did 1M NPT steps followed by 1M NVT steps so that we can analyze pressure from the NVT which will not have vacuum, in theory.  The box dimensions we get from this simulation are: x length 48.875, y length 49.061, z length 91.3641.  Downloading pressure\_scalar-newpress-nonexpanded.txt to dash\_work/interface on laptop for analysis as above.  Using the 1M NPT plus 1M NVT data and 200 blocks, we have a mean pressure of -31.943, SE of the mean 3.174, and SD of values 333.460:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-nonexpanded-full}
+\end{figure}
+Using only the 1M NVT steps, and 100 blocks, we have a mean pressure of -32.501, SE of the mean 3.592, SD of values 364.244:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-nonexpanded}
+\end{figure}
+\item From simulation no. 10, in LAMMPS, we did 1M NVT steps after 1M NPT equilibration.  The box dimensions are: x length 90.498, y length 48.597, z length 48.412.  These lengths are slightly different from the above DASH simulation.  The NVT component of the simulation, from pressures\_scalar-newpress-nonexpanded-lammps-restart2.txt, we get a mean pressure of 54.504, SE of the mean 4.47, and SD of values 375.729, using 100 blocks:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-nonexpanded-lammps-restart2}
+\end{figure}
+Combining the NPT steps into pressures\_scalar-newpress-nonexpanded-lammps-combined.txt, we get a mean pressure of 25.947, SE 3.152, and SD 374.379 using 200 blocks: 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-nonexpanded-lammps-combined}
+\end{figure}
+\end{enumerate}
+
 
 \end{document}

@@ -316,4 +316,101 @@ Combining the NPT steps into pressures\_scalar-newpress-nonexpanded-lammps-combi
 \end{enumerate}
 
 
+\section{8/9/2018}
+\begin{enumerate}
+\item 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-NPT}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{pressures_newpress-NPT-lammps}
+\end{figure}
+\end{enumerate}
+
+\section{8/11/2018}
+\begin{enumerate}
+\item First, we need to re-do molecular orientation plots.  The file molecular\_orientation\_water\_postproduction\_UPDATE.py contains the unwrap update that is necessary for accurate analysis.  In this file, we correctly unwrap molecules based on the location of the oxygen atom.  In dash\_work/interface on Midway, we will use orientation\_postproduction.sbatch to do water orientation postproduction profiles from the 1bead trajectory, full-298-1bead, and the 32 bead trajectory, full-298-32bead-combined.xyz.  The filename for 1bead is orientations\_water\_unwrap.txt, which once downloaded to laptop was copied as orientations\_water\_full-298-1bead-orientations-water.txt.  The filename for 32bead is orientations\_water\_32bead-water-unwrap.txt.    
+\item For full-298-1bead, we used indices 600 to 960:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{full-298-1bead-orientations-water-corrected}
+\end{figure}
+\item We also corrected molecular\_orientation\_hexane\_postproduction\_UPDATE.py to have the appropriate unwrapping procedure.  We use this in orientation\_postproduction\_hexane.sbatch to analyze the same trajectory files as above for hexane.  The 1bead file is orientations\_hexane\_full-298-1bead-orientations-hexane-corrected.txt.  We download this onto laptop and use indices 900 to 1150 to obtain:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{full-298-1bead-orientations-hexane-corrected}
+\end{figure}
+We are also running the 32 bead version, named as above, orientations\_hexane\_full-298-32bead-orientations-hexane-corrected.txt.
+\item We recently resolved the negative pressure issue.  Let's start from Section 2.5 of The Molecular Theory of Capillarity, by J. S. Rowlinson and B. Widom.  The assumption we begin with is that it is possible to consistently define local values of the thermodynamic fields $p, T, \mu$ even in an inhomogeneous system.  At a planar fluid-fluid interface, confied to a cube of sidelength l and interfacial area A = $l^2$, these fields and densities are functions only of the z dimension, defined as normal to the interfacial plane.  We call the pressure in either bulk phase the scalar quantity $p$.  Near the interface the pressure is a tensor since its tangential components, parallel with a dividing surface, include the tension of the interface, and so differ from the normal component.  Mechanical stability requires that the gradient of this tensor is zero everywhere in the fluid, $\triangledown \cdot \vec{p} = 0$ , and the symmetry of the surface requires that $\vec{p}$ is a diagonal tensor, $\vec{p}(\vec{r}) = p_{xx}(\vec{r})e_xe_x + p_{yy}(\vec{r})e_ye_y + p_{zz}(\vec{r})e_ze_z$ with $p_{xx}(\vec{r}) = p_{yy}(\vec{r})$.  Substitution of this equation into the gradiant equation yields $p_{zz}(z) = p_{yy}(z) = p_T(z)$ and $p_{zz}(z) = p_N(z) = p$, where $p_N$ and $p_T$ are the normal and transverse components of the pressure.  If a side-wall of the cube is displaced isothermally and reversibly so as to increase the area by $\delta A$, then the tengential work done on the system is $\delta W_T = -\delta A\int_{-l/2}^{l/2}p_T(z)dz$.  A similar displacement of the top or bottom wall by a distance $\delta A / l$ serves to maintain the volume constant, and requires further (normal) work $\delta W_N = A(\delta A/l)p = l\delta Ap$.  Thus, the total work done, and hence the increase in free energy, is $\delta F = \delta W_T + \delta W_N = \delta A\int_{l/2}^{l/2}[p - p_T(z)]dz$.  Using $dF = -SdT - pdV + \gamma dA + \mu dN$.  So, we can associate this integral with the interfacial tension.    
+\item This brings us to the following.  We define the interfacial tension as $\gamma = \int_0^{L_z}[p_N(z) - p_T(z)]dz$.  Since at a stable planar interface the gradiant of the pressure tensor must be zero, the tensor must be symmetric, and the bulk pressures have scalar value $p$, we can define $p_N(z) = p_{zz} = p$ and $p_T(z) = \frac{p_{xx}(z) + p_{yy}(z)}{2}$.  Using the mean value theorem, we can write the average pressure tensor elements obtained from an MD simulation, $<p_{xx}> = p_{xx}$ and $<p_{yy}> = p_{yy}$ as $p_{xx} = \frac{1}{L_z}\int_0^{L_z}p_{xx}(z)dz$ and $p_{yy} = \frac{1}{L_z}\int_0^{L_z}p_{yy}(z)dz$.  We can then carry out the integration that defines $\gamma$ and rewrite the interfacial tension as $\gamma = (p - \frac{p_{xx} + p_{yy}}{2})$, which is the standard formula for computing interfacial tension in molecular simulations.  In our simulation box, we have two interfaces, so the interfacial tension associated with a single interface can be given by dividing by two:  $\gamma = \frac{1}{2}(p - \frac{p_{xx} + p_{yy}}{2})$.  We assume that the bulk phases are at their equilibrium densities corresponding to $p \approx 1 \text{ atm }$, either by measuring the bulk densities in an NVT simulation or by applying a barostat in the z dimension to maintain $p \approx 1 \text{ atm }$.  For hexane-water, the experimental interfacial tension is 50 $\frac{mN}{m} = 4, 900 \text{atm}\cdot $\AA.  Our simulation box is approximately 100 \AA in the z dimension, so, we have 4,900 atm $\cdot$ \AA = (1 atm - $\frac{p_{xx} + p_{yy}}{2})\cdot$ 100 \AA.  We can solve this to get $p_{xx} + p_{yy} = -194$.  Since the scalar pressure in an MD simulation is computed as $P_{tot} = \frac{p_{xx} + p_{yy} + p_{zz}}{3}$, we have $P_{tot} = -64.33$.  What happens to these negative scalar pressures in the thermodynamic limit?  In ambient conditions, $\gamma$ would still be 50 $\frac{mN}{m}$ and $p = 1 \text{ atm }$, but $L_z\rightarrow\infty$, so $\text{lim}_{L_z\rightarrow\infty}\frac{\gamma}{L_z} = 0$, which implies that $\frac{p_{xx} + p_{yy}}{2}$ converges to $p$ and $P_{tot} \rightarrow 1$. 
+\begin{align}
+\begin{split}
+\gamma = \int_{0}^{L_z}[p_N(z) - p_T(z)]dz
+\end{split}
+\end{align} 
+\begin{align}
+\begin{split}
+p_N(z) = p_{zz} = p
+\end{split}
+\end{align} 
+\begin{align}
+\begin{split}
+p_T(z) = \frac{p_{xx}(z) + p_{yy}(z)}{2}
+\end{split}
+\end{align} 
+\begin{align}
+\begin{split}
+= \frac{1}{2}\left(p - \frac{p_{xx} + p_{yy}}{2}\right)L_z
+\end{split}
+\end{align} 
+\begin{align}
+\begin{split}
+p_{xx} = \left<p_{xx}(z)\right> = \frac{1}{L_z}\int_{-L_z/2}^{L_z/2}p_{xx}(z)dz
+\end{split}
+\end{align} 
+\begin{align}
+\begin{split}
+4,900 \text{ atm } \text{\AA} \approx (1 \text{ atm } - \frac{p_{xx} + p_{yy}}{2})\cdot 100 \text{\AA}
+\end{split}
+\end{align} 
+\begin{align}
+\begin{split}
+p_{xx} + p_{yy} \approx -194
+\end{split}
+\end{align} 
+\begin{align}
+\begin{split}
+P_{\text{tot, MD sim.}} = \frac{p_{xx} + p_{yy} + p_{zz}}{3} \approx -65\text{ atm}
+\end{split}
+\end{align}
+\begin{align}
+\begin{split}
+\text{lim}_{L_z\rightarrow\infty}\frac{\gamma}{L_z}\rightarrow = 0
+\end{split}
+\end{align} 
+\begin{align}
+\begin{split}
+\frac{p_{xx} + p_{yy}}{2} \rightarrow p
+\end{split}
+\end{align} 
+\end{enumerate}
+
+\section{8/12/2018}
+\begin{enumerate}
+\item Working on slides explaining capillary theory contributions for candidacy ppt.  
+\item We download orientations\_hexane\_full-298-32bead-hexane-orientations-corrected.txt and analyzed:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{full-298-32bead-orientations-hexane-corrected}
+\end{figure}
+\item Download orientations\_water\_32bead-water-unwrap.txt.  Had issues with nan in orientation\_profile\_analysis\_UPDATE for some strange reason, nans in the SE measurements, so used nan\_policy='omit' for stats.sem.  Finally, it works: used zlo 600 zhi 940:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{full-298-32bead-orientations-water-corrected}
+\end{figure}
+\end{enumerate}
+
+
 \end{document}

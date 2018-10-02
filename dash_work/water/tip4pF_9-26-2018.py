@@ -23,9 +23,12 @@ def create_parser():
     parser.add_argument('-numMolecules', dest='numMolecules', default=216, help='Number of molecules')
     parser.add_argument('-nSteps', dest='nSteps', default=200000, help='Number of simulation steps')
     parser.add_argument('-ensemble', dest='ensemble', default='NPT', help='Simulation ensemble')
+    parser.add_argument('-barostat', dest='barostat', default='Berendsen', help='Type of barostat to use, either Berendsen or MonteCarlo')
     parser.add_argument('-T', dest='T', default=298.0, help='Simulation temperature')
     parser.add_argument('-P', dest='P', default=1.0, help='Simulation pressure')
     parser.add_argument('-density_init', dest='density_init', default=0.997, help='Initial configuration density')
+    parser.add_argument('-rCut', dest='rCut', default=9.0, help='Cutoff radius for short-range interactions') 
+    parser.add_argument('-timeStep', dest='timeStep', default=0.5, help='MD time step')        
     parser.add_argument('-PI', dest='PI', default=False, help='Boolean for path integral simulation')
     parser.add_argument('-nBeads', dest='nBeads', default=1, help='Number of beads for path integral simulation')
     parser.add_argument('-record_traj', dest='record_traj', default=True, help='Boolean for recording configurations')
@@ -49,9 +52,12 @@ def convert_args(args):
     options['numMolecules'] = args.numMolecules
     options['nSteps'] = args.nSteps
     options['ensemble'] = args.ensemble
+    options['barostat'] = args.barostat 
     options['T'] = args.T
     options['P'] = args.P
     options['density_init'] = args.density_init
+    options['rCut'] = args.rCut
+    options['timeStep'] = args.timeStep
     options['PI'] = args.PI
     options['nBeads'] = args.nBeads
     options['record_traj'] = args.record_traj
@@ -79,9 +85,12 @@ def process_datafile(files, options):
     numMolecules = int(options['numMolecules'])
     nSteps = int(options['nSteps'])
     ensemble = str(options['ensemble'])
+    barostat = str(options['barostat'])
     T = float(options['T'])
     P = float(options['P'])
     density_init = float(options['density_init'])
+    rCut = float(options['rCut'])
+    timeStep = float(options['timeStep'])
     PI = str2bool(options['PI'])
     nBeads = int(options['nBeads'])
     record_traj = str2bool(options['record_traj'])
@@ -108,11 +117,11 @@ def process_datafile(files, options):
         state.bounds = Bounds(state, lo = loVector, hi = hiVector)
 
     state.units.setReal()
-    state.rCut = 9.0
+    state.rCut = rCut
     state.padding = 2.0
     state.periodicInterval = 1
     state.shoutEvery = 100
-    state.dt = 0.500
+    state.dt = timeStep
     the_temp = T
 
     # Adjust the temperature for path integral simulation if specified
@@ -160,6 +169,8 @@ def process_datafile(files, options):
     harmonicAngle = FixAngleHarmonic(state, 'angleH')
     harmonicAngle.setAngleTypeCoefs(type=0, k=87.85, theta0=( (107.4/180.0) * pi))
 
+    rppot = FixRingPolyPot(state, "rppot", "all")
+
     if not restart:
         # Add the molecules
         positions = []
@@ -203,6 +214,7 @@ def process_datafile(files, options):
     state.activateFix(bondQuart)
     state.activateFix(flexibleTIP4P)
     state.activateFix(harmonicAngle)
+    state.activateFix(rppot)
 
     # Initialize integrator
     integVerlet = IntegratorVerlet(state)
@@ -218,9 +230,13 @@ def process_datafile(files, options):
     state.activateFix(fixNVT)
 
     if ensemble == 'NPT':
-        fixPressure = FixPressureBerendsen(state, 'npt', P, 10000, 5)
-        state.activateFix(fixPressure)
-
+        if barostat == 'Berendsen':
+            print('Using Berendsen Barostat')
+            fixPressure = FixPressureBerendsen(state, 'npt', P, 10000, 5)
+        elif barostat == 'MonteCarlo':
+            print('Using MonteCarlo Barostat')
+            fixPressure = FixPressureMonteCarlo(state, handle='all', pressure=P, scale=0.002, applyEvery=25,tune=True,tuneFreq=200*25, mode='direct')
+        
     # Initialize system temperature
     InitializeAtoms.initTemp(state, 'all', the_temp)
 
@@ -233,8 +249,7 @@ def process_datafile(files, options):
 
     # Write configurations and restart files
     if record_traj:
-        writer = WriteConfig(state, handle='writer', fn=filename, format='xyz',
-                             writeEvery=trajFreq)
+        writer = WriteConfig(state, handle='writer', fn=filename, format='xyz', writeEvery=trajFreq)
         state.activateWriteConfig(writer)
 
     if record_restart:
@@ -272,6 +287,9 @@ def process_datafile(files, options):
     # Construct pressure python operation
     dataOperation = PythonOperation(handle = 'dataOp', operateEvery = dataFreq, operation = data_recording, synchronous=True)
     state.activatePythonOperation(dataOperation)
+
+    # Activate pressure fix last
+    state.activateFix(fixPressure)
 
     # Run the simulation
     integVerlet.run(nSteps)

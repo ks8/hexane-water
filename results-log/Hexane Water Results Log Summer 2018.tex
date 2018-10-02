@@ -186,7 +186,7 @@
 
 
 
-\title{Hexane Water Results Log Summer 2018}
+\title{Hexane Water Results Log Summer 2018 (August-Present)}
 \author{Kirk Swanson}
 \email{swansonk1@uchicago.edu}
 \address{Institute for Molecular Engineering, University of Chicago, 5640 S Ellis Ave, Chicago, IL 60637}
@@ -372,7 +372,7 @@ p_{xx} = \left<p_{xx}(z)\right> = \frac{1}{L_z}\int_{-L_z/2}^{L_z/2}p_{xx}(z)dz
 \end{align} 
 \begin{align}
 \begin{split}
-4,900 \text{ atm } \text{\AA} \approx (1 \text{ atm } - \frac{p_{xx} + p_{yy}}{2})\cdot 100 \text{\AA}
+4,900 \text{ atm } \text{\AA} \approx \frac{1}{2}(1 \text{ atm } - \frac{p_{xx} + p_{yy}}{2})\cdot 100 \text{\AA}
 \end{split}
 \end{align} 
 \begin{align}
@@ -410,6 +410,46 @@ P_{\text{tot, MD sim.}} = \frac{p_{xx} + p_{yy} + p_{zz}}{3} \approx -65\text{ a
 \centering
 \includegraphics[scale=0.7]{full-298-32bead-orientations-water-corrected}
 \end{figure}
+\end{enumerate}
+
+\section{8/13/2018}
+\begin{enumerate}
+\item PIMC barostat acceptance criterion:
+\begin{align}
+\begin{split}
+A(V'/V) = \text{min}[1, e^{-\beta P(V' - V)}e^{-\beta[(U(r') - U(r))/nBeads]}e^{N\text{ln}(V'/V)}]
+\end{split}
+\end{align}
+\item Developing ppt slide on density fluctuations:
+\begin{align}
+\begin{split}
+\rho_W(z) = \frac{1}{2}\rho_W + \frac{1}{2}\rho_W\text{erf}\left(\frac{z - \left<h_W\right>}{\sqrt{2}\sigma_c}\right) \\
+\rho_H(z) = \frac{1}{2}\rho_H - \frac{1}{2}\rho_H\text{erf}\left(\frac{z - \left<h_H\right>}{\sqrt{2}\sigma_c}\right) 
+\end{split}
+\end{align}
+\begin{align}
+\begin{split}
+\sigma_0 = \left<h_H\right> - \left<h_W\right> \\
+\sigma_c^2 = \frac{k_BT}{2\pi\gamma}\text{ln}\left(\frac{L_{||}}{l_b}\right) 
+\end{split}
+\end{align}
+\end{enumerate}
+
+\section{8/14/2018}
+\begin{enumerate}
+\item 
+\begin{align}
+\begin{split}
+\le
+\end{split}
+\end{align}
+\end{enumerate}
+
+\section{8/23/2018}
+\begin{enumerate}
+\item Test 1: P\_16 on midway-l13b-21, printing to test.xyz but not output right away.  About 175,000 printings to .xyz (about 10,000 steps) but none to output.   Started printing to output after about 4:00 minutes.  Stopped printing and said "Turn 3271000 15.86 per"  without finishing line.  At about 8 minutes it printed again to output file, catching up...and immediately got stuck again.  
+\item Test2: P\_16 on midway2-gpu06, printing to output right away, no problem. 
+\item Test 3: P\_16 on midway-l13b-21, printing to test.xyz but not output right away.   
 \end{enumerate}
 
 

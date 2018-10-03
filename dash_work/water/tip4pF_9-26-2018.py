@@ -221,8 +221,10 @@ def process_datafile(files, options):
 
     # Establish data recording
     tempData = state.dataManager.recordTemperature('all', interval = dataFreq)
-    dataPressureScalar = state.dataManager.recordPressure(handle='all', mode='scalar', interval=dataFreq)
+    #dataPressureScalar = state.dataManager.recordPressure(handle='all', mode='scalar', interval=dataFreq)
     boundsData = state.dataManager.recordBounds(interval=dataFreq)
+    engData = state.dataManager.recordEnergy(handle='all', mode='scalar', interval=dataFreq)
+    #kinengData = state.dataManager.recordTemperature('all', mode='vector', interval = dataFreq)
 
     # Thermostats and barostats
     fixNVT = FixNVTAndersen(state, handle='nvt', groupHandle='all', temp=the_temp, nu=0.01)
@@ -265,22 +267,25 @@ def process_datafile(files, options):
         mtot /= nBeads
 
     # Create data files
-    output = open('pressures_scalar-'+filename+'.txt', 'w')
-    output.close()
-
-    output = open('densities-'+filename+'.txt', 'w')
+    output = open('simulation_data-'+filename+'.txt', 'w')
+    output.write(str('#')+'\"Potential Energy (kJ/mole)\",'+'\"Temperature (K)\",'+'\"Density (g/mL)\"'+'\n')
     output.close()
 
     # Printing pressure information
     def data_recording(currentTurn):
 
-        # Print scalar pressures
-        output = open('pressures_scalar-'+filename+'.txt', 'a')
-        output.write(str(dataPressureScalar.vals[-1]) + '\n')
-        output.close()
+        # # Compute total kinetic energy
+        # totalkineng = 0.0
 
-        # Print densities
-        output = open('densities-'+filename+'.txt', 'a')
+        # for val in kinengData.vals[-1]:
+        #     totalkineng += val 
+
+        # Print data
+        output = open('simulation_data-'+filename+'.txt', 'a')
+        #output.write(str(dataPressureScalar.vals[-1]) + ',')
+        output.write(str(engData.vals[-1]*4.184) + ',')
+        #output.write(str(totalkineng*(1/(7.242972*(10**25)))*(1.6022*(10**23))) + ',')
+        output.write(str(tempData.vals[-1]) + ',')
         output.write(str((1.0/0.6022)*(mtot/boundsData.vals[-1].volume())) + '\n')
         output.close()
 

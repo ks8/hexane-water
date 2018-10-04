@@ -475,18 +475,95 @@ A(V'/V) = \text{min}[1, e^{-\beta P(V' - V)}e^{-\beta[(U(r') - U(r))/nBeads]}e^{
 \item Having trouble understanding the kinetic energy units in DASH...not sure what is going on here.  I just want to compute the total kinetic energy.  For now we will leave it out then.  
 \subitem Tests using the Isotropic Monte Carlo Barostat:
 \subsubitem Time Step: 0.5 fs, rCut: 9 A, nBeads: 1, jobname MC-1/B-1/MM-1
-\subsubitem Time Step: 0.5, rCut: 9, nBeads: 16, jobname MC-2, ""
-\subsubitem Time Step: 0.5, rCut: 9, nBeads: 32, jobname MC-3, ""
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 1, jobname MC-4 ""
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 16, jobname MC-5 ""
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 32, jobname MC-6 ""
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 1, jobname MC-7 ""
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 16, jobname MC-8 ""
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 32, jobname MC-9 ""
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 1, jobname MC-10 ""
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 16, jobname MC-11 ""
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 32, jobname MC-12 ""
+\subsubitem Time Step: 0.5, rCut: 9, nBeads: 16, jobname MC-2/B-2/MM-2
+\subsubitem Time Step: 0.5, rCut: 9, nBeads: 32, jobname MC-3/B-3/MM-3
+\subsubitem Time Step: 0.5, rCut: 12, nBeads: 1, jobname MC-4/B-4/MM-4
+\subsubitem Time Step: 0.5, rCut: 12, nBeads: 16, jobname MC-5/B-5/MM-5
+\subsubitem Time Step: 0.5, rCut: 12, nBeads: 32, jobname MC-6/B-6/MM-6
+\subsubitem Time Step: 0.25, rCut: 9, nBeads: 1, jobname MC-7/B-7/MM-7
+\subsubitem Time Step: 0.25, rCut: 9, nBeads: 16, jobname MC-8/B-8/MM-8
+\subsubitem Time Step: 0.25, rCut: 9, nBeads: 32, jobname MC-9/B-9/MM-9
+\subsubitem Time Step: 1.0, rCut: 9, nBeads: 1, jobname MC-10/B-10/MM-10
+\subsubitem Time Step: 1.0, rCut: 9, nBeads: 16, jobname MC-11/B-11/MM-11
+\subsubitem Time Step: 1.0, rCut: 9, nBeads: 32, jobname MC-12/B-12/MM-12
+\subsubitem Time Step: 0.5 fs, rCut: 9A, nBeads: 1, NO BAROSTAT, jobname dash-noP/open-noP (compare energies at same density)
+\subsubitem Time Step: 0.5 fs, rCut: 9A, nBeads: 64, jobname MC-13/B-13/MM-13
+\subsubitem Time Step: 0.5 fs, rCut: 9A, nBeads: 128, jobname MC-13/B-13/MM-13
 \end{enumerate}
+
+\section{10/4/2018}
+\begin{enumerate}
+\item MC-1 thru 3 and MM-1 thru 3 finished running.  Let's now analyze the results.  
+\item Wrote data\_analysis.py in Path Integrals/hexane-water/dash\_work/water folder for analysis of this data.  
+\item Here is an initial result for Time Step: 0.5 fs, rCut: 9 A, nBeads: 1:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{MC-MM-nBead1-rCut9-ts05}
+\end{figure}
+\item Realized that we should have an equilibration period before comparing averages, since the beginning of the simulation seems to screw things up.  We should also report average values with SE values.  
+\item Using simulations MC-1 and MM-1, we can look at the standard error of the density for various block sizes to choose an appropriate number of blocks for block averaging.  Wrote the file SE\_analysis.py in the same folder as above.  We get the following:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{block_averaging_DASH-vs-OpenMM}
+\end{figure}
+\item Based on this figure, we will choose 100 ps for an appropriate block size.  Since we are reserving the first 100 ps for equilibration, this gives us 9 blocks of size 100 ps.  
+\item We also tried a different format allowing for variable block sizes:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{block_averaging_DASH-vs-OpenMM_variable}
+\end{figure}
+\item The If the number of blocks is 2.5, then it leaves out the last 0.5 of data.  There could be other ways of doing this...but for now, this is fine.  Result is still the same: 100 ps is a good block size.  
+\item Using 9 blocks of size 100 ps, we then have (USING +/- 2*SE):
+\subitem DASH Density: 0.98974 $\pm$ 0.00072 g/mL
+\subitem OpenMM Density: 1.00073 $\pm$ 0.00132 g/mL
+\subitem DASH Potential Energy: -42276.85961 $\pm$ 35.38552 kJ/mol
+\subitem OpenMM Potential Energy: -43041.14116 $\pm$ 33.45556 kJ/mol
+\subitem DASH Temperature: 300.30567 $\pm$ 0.27942 K
+\subitem OpenMM Temperature: 300.09525 $\pm$ 0.386 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead1-rCut9-ts05-new}
+\end{figure}
+\item For Time Step: 0.5 fs, rCut: 9 A, nBeads 16:
+\item Using 9 blocks of size 100 ps, we then have:
+\subitem DASH Density: 1.01268 $\pm$ 0.00176 g/mL
+\subitem OpenMM Density: 0.99751 $\pm$ 0.00104 g/mL
+\subitem DASH Temperature: 4774.04631 $\pm$ 1.91432 K
+\subitem OpenMM Temperature: 4788.12303 $\pm$ 2.5978 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead16-rCut9-ts05}
+\end{figure}
+
+\item For Time Step: 0.5 fs, rCut: 9 A, nBeads 32:
+\item Using 9 blocks of size 100 ps, we then have:
+\subitem DASH Density: 1.03649 $\pm$ 0.00082 g/mL
+\subitem OpenMM Density: 0.9995 $\pm$ 0.00176 g/mL
+\subitem DASH Temperature: 9532.01452 $\pm$ 2.57316 K
+\subitem OpenMM Temperature: 9555.22163 $\pm$ 6.96436 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead32-rCut9-ts05}
+\end{figure}
+
+\item It would be interesting to see what happens for 64 beads.  Let's run both of these under the same above conditions.  These will be simulations no. 23 and 24.  
+\item We also want to run the Berendsen barostat in DASH for 0.5 fs, rCut 9, and nBeads 1, 16, and 32.  These will be simulations 25, 26, 27.  
+\item It would also be interesting to run with no PI beads for 0.5 fs, rCut 9, which will be simulation 28 and 29 for Berendsen and MonteCarlo, respectively.
+\item We also want to run the simulations that compare different rCut, so we will run DASH MC barostat using 0.5 fs, rCut 12 A, and nBeads 1, 16, 32, which will be simulations 30, 31, 32 and job names MC-4, MC-5, MC-6.  We will also do this in OpenMM, jobs MM-4, MM-5, MM-6 and simulations 33, 34, 35.  
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 \end{document}

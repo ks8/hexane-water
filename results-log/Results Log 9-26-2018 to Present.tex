@@ -212,36 +212,23 @@
 \section{10/3/2018}
 \begin{enumerate}
 \item We will begin by running a series of tests on q-TIP4P/F water.  We will use the following system: 1000 water molecules, 1 ns, initial density of 0.997, temperature of 298 K, pressure 1 atm, printing data every 1000 steps.  We are using run\_9-26-2018.sh and tip4pF\_9-26-2018.py to run DASH version from 9/26/2018.  
-\subitem Tests using the Isotropic Monte Carlo Barostat:
-\subsubitem Time Step: 0.5, rCut: 9, nBeads: 1, jobname MC-1, restart/traj every 50,000, RUNNING
-\subsubitem Time Step: 0.5, rCut: 9, nBeads: 16, jobname MC-2, restart/traj every 50,000, RUNNING
-\subsubitem Time Step: 0.5, rCut: 9, nBeads: 32, jobname MC-3, restart/traj every 50,000, RUNNING
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 1, jobname MC-4
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 16, jobname MC-5
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 32, jobname MC-6
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 1, jobname MC-7
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 16, jobname MC-8
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 32, jobname MC-9
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 1, jobname MC-10
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 16, jobname MC-11
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 32, jobname MC-12
-\subitem Tests using the Berendsen Barostat:
-\subsubitem Time Step: 0.5, rCut: 9, nBeads: 1, jobname B-1
-\subsubitem Time Step: 0.5, rCut: 9, nBeads: 16, jobname B-2
-\subsubitem Time Step: 0.5, rCut: 9, nBeads: 32, jobname B-3
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 1, jobname B-4
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 16, jobname B-5
-\subsubitem Time Step: 0.5, rCut: 12, nBeads: 32, jobname B-6
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 1, jobname B-7
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 16, jobname B-8
-\subsubitem Time Step: 0.25, rCut: 9, nBeads: 32, jobname B-9
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 1, jobname B-10
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 16, jobname B-11
-\subsubitem Time Step: 1.0, rCut: 9, nBeads: 32, jobname B-12
 \item On /home/swansonk1, Midway 1, go into openmm folder.  On depablo-gpu, module load Anaconda3, source activate openmm-env.  Downloaded pimd.py from Markland, called it pimd\_original.py, and created new file pimd\_modified.py.  In the modified file, we change the nonbondedCutoff to 0.9*nanometers, comment out the platform and properties assignments (so that we use OpenCL by default), and change the Simulation() to get rid of platform and properties arguments.  
 \item Searching for OpenMM code here: http://docs.openmm.org/development/api-python/
 \item Found RPMDMonteCarloBarostat.  "This class is very similar to MonteCarloBarostat, but it is specifically designed for use with RPMDIntegrator.  For each trial move, it scales all copies of the system by the same amount, then accepts or rejects the move based on the change to the total energy of the ring polymer."
 \item Having trouble understanding the kinetic energy units in DASH...not sure what is going on here.  I just want to compute the total kinetic energy.  For now we will leave it out then.  
+\subitem Tests using the Isotropic Monte Carlo Barostat:
+\subsubitem Time Step: 0.5 fs, rCut: 9 A, nBeads: 1, jobname MC-1/B-1/MM-1
+\subsubitem Time Step: 0.5, rCut: 9, nBeads: 16, jobname MC-2, ""
+\subsubitem Time Step: 0.5, rCut: 9, nBeads: 32, jobname MC-3, ""
+\subsubitem Time Step: 0.5, rCut: 12, nBeads: 1, jobname MC-4 ""
+\subsubitem Time Step: 0.5, rCut: 12, nBeads: 16, jobname MC-5 ""
+\subsubitem Time Step: 0.5, rCut: 12, nBeads: 32, jobname MC-6 ""
+\subsubitem Time Step: 0.25, rCut: 9, nBeads: 1, jobname MC-7 ""
+\subsubitem Time Step: 0.25, rCut: 9, nBeads: 16, jobname MC-8 ""
+\subsubitem Time Step: 0.25, rCut: 9, nBeads: 32, jobname MC-9 ""
+\subsubitem Time Step: 1.0, rCut: 9, nBeads: 1, jobname MC-10 ""
+\subsubitem Time Step: 1.0, rCut: 9, nBeads: 16, jobname MC-11 ""
+\subsubitem Time Step: 1.0, rCut: 9, nBeads: 32, jobname MC-12 ""
 \end{enumerate}
 
 

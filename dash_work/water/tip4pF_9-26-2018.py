@@ -294,7 +294,8 @@ def process_datafile(files, options):
     state.activatePythonOperation(dataOperation)
 
     # Activate pressure fix last
-    state.activateFix(fixPressure)
+    if ensemble == 'NPT':
+        state.activateFix(fixPressure)
 
     # Run the simulation
     integVerlet.run(nSteps)

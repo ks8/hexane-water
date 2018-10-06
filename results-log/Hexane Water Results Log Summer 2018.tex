@@ -552,6 +552,87 @@ A(V'/V) = \text{min}[1, e^{-\beta P(V' - V)}e^{-\beta[(U(r') - U(r))/nBeads]}e^{
 \item We also want to run the simulations that compare different rCut, so we will run DASH MC barostat using 0.5 fs, rCut 12 A, and nBeads 1, 16, 32, which will be simulations 30, 31, 32 and job names MC-4, MC-5, MC-6.  We will also do this in OpenMM, jobs MM-4, MM-5, MM-6 and simulations 33, 34, 35.  
 \end{enumerate}
 
+\section{10/5/2018}
+\begin{enumerate}
+\item For time step 0.5 fs, rCut 9 A, nBeads 1, using the Berendsen barostat for DASH:
+\subitem DASH Density: 0.98832 $\pm$ 0.00058 g/mL
+\subitem OpenMM Density: 1.00073$\pm$ 0.00132 g/mL
+\subitem DASH Potential Energy: -42320.03482 $\pm$  35.48798 kJ/mol
+\subitem OpenMM Potential Energy: -43041.14116 $\pm$ 33.45556 kJ/mol
+\subitem DASH Temperature: 299.70865 $\pm$ 0.45264  K
+\subitem OpenMM Temperature:  300.09525 $\pm$ 0.386 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{B-MM-nBead1-rCut9-ts05}
+\end{figure}
+\item For time step 0.5 fs, rCut 9 A, no PI beads for DASH version and 1 for OpenMM, using Berendsen for DASH:
+\subitem DASH Density: 0.98821 $\pm$ 0.00052 g/mL
+\subitem OpenMM Density: 1.00073$\pm$ 0.00132 g/mL
+\subitem DASH Potential Energy: -42341.16144 $\pm$  41.09194 kJ/mol
+\subitem OpenMM Potential Energy: -43041.14116 $\pm$ 33.45556 kJ/mol
+\subitem DASH Temperature: 299.77902 $\pm$ 0.6386  K
+\subitem OpenMM Temperature:  300.09525 $\pm$ 0.386 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{B-no-PI-MM-nBead1-rCut9-ts05}
+\end{figure}
+
+\item For time step 0.5 fs, rCut 9 A, no PI beads for DASH version and 1 for OpenMM, using MonteCarlo for DASH:
+\subitem DASH Density: 0.98886 $\pm$ 0.00052 g/mL
+\subitem OpenMM Density: 1.00073$\pm$ 0.00116 g/mL
+\subitem DASH Potential Energy: -42286.8873 $\pm$  29.45386 kJ/mol
+\subitem OpenMM Potential Energy: -43041.14116 $\pm$ 33.45556 kJ/mol
+\subitem DASH Temperature: 300.28388 $\pm$ 0.34328  K
+\subitem OpenMM Temperature:  300.09525 $\pm$ 0.386 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-no-PI-MM-nBead1-rCut9-ts05}
+\end{figure}
+
+\item For time step 0.5 fs, rCut 12 A, nBeads 1 using MonteCarlo for DASH:
+\subitem DASH Density: 0.99837 $\pm$ 0.0012 g/mL
+\subitem OpenMM Density: 1.00162$\pm$ 0.00092 g/mL
+\subitem DASH Potential Energy: -42634.1723 $\pm$ 34.76596 kJ/mol
+\subitem OpenMM Potential Energy: -43037.889 $\pm$ 22.094 kJ/mol
+\subitem DASH Temperature: 300.37583 $\pm$ 0.39688  K
+\subitem OpenMM Temperature:  300.22983 $\pm$ 0.526 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead1-rCut12-ts05}
+\end{figure}
+
+\item For time step 0.5 fs, rCut 12 A, nBeads 16 using MonteCarlo for DASH:
+\subitem DASH Density: 1.01984 $\pm$ 0.00176 g/mL
+\subitem OpenMM Density: 0.99702$\pm$ 0.00106 g/mL
+\subitem DASH Temperature: 4773.6277 $\pm$ 1.52266  K
+\subitem OpenMM Temperature:  4785.29712 $\pm$ 4.35954 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead16-rCut12-ts05}
+\end{figure}
+
+\item For time step 0.5 fs, rCut 12 A, nBeads 32 using MonteCarlo for DASH:
+\subitem DASH Density: 1.04464 $\pm$ 0.00154 g/mL
+\subitem OpenMM Density: 0.99902 $\pm$ 0.0005 g/mL
+\subitem DASH Temperature: 9531.9981 $\pm$ 3.0  K
+\subitem OpenMM Temperature:  9549.73486 $\pm$ 7.4266 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead32-rCut12-ts05}
+\end{figure}
+
+\item Now we will run MC/MM-7, 8, 9, 10, 11, 12 as specified above, which will be simulations 36-47. 
+\item Now, we will try running an NVT system to see if there is still an energy difference in the 1 bead case.  To do this, we want to make sure we are running the DASH and OpenMM systems at the same number of molecules and densities.  So, let's see what the default OpenMM density is.
+\item Running an NVT test, we see that the density is exactly 0.9979734044480487.  So, let's run DASH using the standard parameters in NVT with 1 bead and this exact initial density, and same thing with OpenMM, and compare energies.  These will be simulations 48 and 49.   
+\item We also want to check the standard NPT run increasing rCut to 15: for DASH and OpenMM, these will be simulations 50 and 51.  
+
+
+\item NVT same density/number molecules for 1 bead with charge, then NPT and NVT for 1 bead turning charges off
+\item Try doing another dummy system: van der Waals particles/LJ particles in a box, same test as above 
+\item Rule out: problem related to long-range electrostatics, is that problem specific to tip4p/F, could try tip3p or something.  Paesani and Voth SPC perhaps
+\item Check all parameters of the OpenMM model for accuracy...
+\end{enumerate}
+
 
 
 

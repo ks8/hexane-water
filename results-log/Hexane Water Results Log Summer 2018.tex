@@ -630,7 +630,197 @@ A(V'/V) = \text{min}[1, e^{-\beta P(V' - V)}e^{-\beta[(U(r') - U(r))/nBeads]}e^{
 \item NVT same density/number molecules for 1 bead with charge, then NPT and NVT for 1 bead turning charges off
 \item Try doing another dummy system: van der Waals particles/LJ particles in a box, same test as above 
 \item Rule out: problem related to long-range electrostatics, is that problem specific to tip4p/F, could try tip3p or something.  Paesani and Voth SPC perhaps
-\item Check all parameters of the OpenMM model for accuracy...
+\item Check all parameters of the OpenMM model for accuracy...and comparison to DASH...
+\item check 1-4 interactions??? how does this work in DASH?  what is the default nonbonded 1-4 interaction in dash?
+\end{enumerate}
+
+\section{10/6/2018}
+\begin{enumerate}
+\item Let's start by constructing water models that have zero electrostatic charge.  
+\item For OpenMM, creating a file called qtip4pf-0charge.xml where we will set the charge for the H atoms and M-site to zero.  
+\item For DASH, created a new addition to the water.py utils\_py script called create\_TIP4PFlexible\_0charge, which creates water molecules with zero charge.  We will now run simulations 52 and 53, which will be DASH MonteCarlo NPT with standard stuff but zero charge and OpenMM zero charge
+\item Looks like sims. 51 and 52 did not equilibrate, so let's run for 10 ns and see if that helps.  This will be 54 adn 55.  
+\end{enumerate}
+
+\section{10/7/2018}
+\begin{enumerate}
+\item Let's start by creating the full story of plots with things that we've done so far. 
+\item Updated plot for MM-1 and MC-1:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead1-rCut9-ts05-update}
+\end{figure}
+\item Leaving out energies for multiple beads b/c DASH reports energies on the order of 2M kJ/mol while OpenMM reports on the order of -20,000 kJ/mol.  
+\item Updated plot for MC-2 and MM-2: 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead16-rCut9-ts05-update}
+\end{figure}
+\item Updated plot for MC-3 and MM-3: 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead32-rCut9-ts05-update}
+\end{figure}
+\item For time step 0.5 fs, rCut 9 A, nBeads 1 using Berendsen for DASH:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{B-MM-nBead1-rCut9-ts05-update}
+\end{figure}
+
+\item For time step 0.5 fs, rCut 9 A, nBeads 16 using Berendsen for DASH: something is clearly erroneous:
+The density for the DASH version quickly drops off close to zero...so something weird is clearly happening.  Same thing with the 32 bead version...
+
+\item For time step 0.5 fs, rCut 12 A, nBeads 1 using MonteCarlo for DASH (data copied from above):
+\subitem DASH Density: 0.99837 $\pm$ 0.0012 g/mL
+\subitem OpenMM Density: 1.00162$\pm$ 0.00092 g/mL
+\subitem DASH Potential Energy: -42634.1723 $\pm$ 34.76596 kJ/mol
+\subitem OpenMM Potential Energy: -43037.889 $\pm$ 22.094 kJ/mol
+\subitem DASH Temperature: 300.37583 $\pm$ 0.39688  K
+\subitem OpenMM Temperature:  300.22983 $\pm$ 0.526 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead1-rCut12-ts05-update}
+\end{figure}
+
+\item For time step 0.5 fs, rCut 12 A, nBeads 16 using MonteCarlo for DASH (data copied from above):
+\subitem DASH Density: 1.01984 $\pm$ 0.00176 g/mL
+\subitem OpenMM Density: 0.99702$\pm$ 0.00106 g/mL
+\subitem DASH Temperature: 4773.6277 $\pm$ 1.52266  K
+\subitem OpenMM Temperature:  4785.29712 $\pm$ 4.35954 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead16-rCut12-ts05-update}
+\end{figure}
+
+\item For time step 0.5 fs, rCut 12 A, nBeads 32 using MonteCarlo for DASH (data copied from above):
+\subitem DASH Density: 1.04464 $\pm$ 0.00154 g/mL
+\subitem OpenMM Density: 0.99902 $\pm$ 0.0005 g/mL
+\subitem DASH Temperature: 9531.9981 $\pm$ 3.0  K
+\subitem OpenMM Temperature:  9549.73486 $\pm$ 7.4266 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead32-rCut12-ts05-update}
+\end{figure}
+
+\item For time step 0.25 fs, rCut 9 A, nBeads 1 using MonteCarlo for DASH:
+\subitem DASH Density: 0.98814 $\pm$ 0.00115 g/mL
+\subitem OpenMM Density: 1.0007 $\pm$ 0.0008 g/mL
+\subitem DASH Potential Energy: -42444.13902 $\pm$ 35.19276 kJ/mol
+\subitem OpenMM Potential Energy: -43114.43317 $\pm$ 29.3608 kJ/mol
+\subitem DASH Temperature: 298.5529 $\pm$ 0.3806  K
+\subitem OpenMM Temperature:  298.44123 $\pm$ 0.26228 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead1-rCut9-ts025}
+\end{figure}
+
+\item For time step 0.25 fs, rCut 9 A, nBeads 16 using MonteCarlo for DASH:
+\subitem DASH Density: 0.98032 $\pm$ 0.0011 g/mL
+\subitem OpenMM Density: 0.99773 $\pm$ 0.001188 g/mL
+\subitem DASH Temperature: 297.083 $\pm$ 0.0226  K
+\subitem OpenMM Temperature:  298.3412 $\pm$ 0.1347 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead16-rCut9-ts025}
+\end{figure}
+
+\item For time step 0.25 fs, rCut 9 A, nBeads 32 using MonteCarlo for DASH:
+\subitem DASH Density: 0.97463 $\pm$ 0.00156 g/mL
+\subitem OpenMM Density: 0.99888 $\pm$ 0.0011 g/mL
+\subitem DASH Temperature: 296.85178 $\pm$ 0.078387  K
+\subitem OpenMM Temperature:  298.212148 $\pm$ 0.16234 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead32-rCut9-ts025}
+\end{figure}
+
+\item For time step 1.0 fs, rCut 9 A, nBeads 1 using MonteCarlo for DASH:
+\subitem DASH Density: 0.99712 $\pm$ 0.00159 g/mL
+\subitem OpenMM Density: 0.99966 $\pm$ 0.00214 g/mL
+\subitem DASH Potential Energy: -41438.529 $\pm$ 42.6877 kJ/mol
+\subitem OpenMM Potential Energy: -42710.35912 $\pm$ 32.50538 kJ/mol
+\subitem DASH Temperature: 309.13899 $\pm$ 0.43108  K
+\subitem OpenMM Temperature:  307.90749 $\pm$ 0.438 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead1-rCut9-ts1}
+\end{figure}
+
+\item For time step 1.0 fs, rCut 9 A, nBeads 16 using MonteCarlo for DASH:
+\subitem DASH Density:1.18474 $\pm$ 0.0009 g/mL
+\subitem OpenMM Density: 0.996576 $\pm$ 0.00175 g/mL
+\subitem DASH Temperature: 313.89341 $\pm$ 0.14455  K
+\subitem OpenMM Temperature:  303.714367 $\pm$ 0.30905 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-nBead16-rCut9-ts1}
+\end{figure}
+
+
+\end{enumerate}
+
+\section{10/8/2018}
+\begin{enumerate}
+\item Compare 1 bead (and possibly multiple bead?) cases to LAMMPS, so we can see what the energy should be etc.  
+\item Do multiple beads in NVT
+\item Understand energy completely, diagnose the NVT case first before NPT
+\item Figure out energy issue, like what is the comparable energy and what are DASH and OpenMM actually computing (maybe restrict DASH to specific fixes?)
+\item Try SPC water model to eliminate M-site problem
+\item Run 0 charge for 20M steps instead of just 10M to get better equilibration convergence 
+\item Try potential from Martyna 1999 to test basic PIMD integrator/barostat 
+\item For time step 1.0 fs, rCut 9 A, nBeads 32 using MonteCarlo for DASH:
+\subitem DASH Density: Over 190,000, dropped from 0.997 to 0.855.  
+\subitem OpenMM Density: 0.99617 $\pm$ 0.00085 g/mL
+\subitem DASH Temperature: Temperature and Energy failed to record (nans), and .xyz file filled with nans as well.  
+\subitem OpenMM Temperature:  301.93122 $\pm$ 7.58815 K
+\item The above problem appeared to persist from time step 0.9 fs and higher. 
+
+\item For time step 0.5 fs, rCut 9 A, nBeads 1 using NVT for DASH and OpenMM:
+\subitem DASH Potential Energy: -42320.31975 $\pm$ 24.91336 kJ/mol
+\subitem OpenMM Potential Energy: -43040.87081 $\pm$ 20.17038 kJ/mol
+\subitem DASH Temperature: 300.2369 $\pm$ 0.32871  K
+\subitem OpenMM Temperature: 300.3045 $\pm$ 0.25418 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-NVT-1bead}
+\end{figure} 
+
+\item For time step 0.5 fs, rCut 9 A, nBeads 1 DASH Monte Carlo, 0 charge for both (simulations 54 and 55), using the entire dataset, 6 blocks for SE analysis :
+\subitem DASH Density: 0.049276 $\pm$ 0.055271 g/mL
+\subitem OpenMM Density: 0.042175 $\pm$ 0.062486 g/mL
+\subitem DASH Potential Energy: 3706.58614 $\pm$ 222.6355 kJ/mol
+\subitem OpenMM Potential Energy: 3635.81484 $\pm$ 289.05871 kJ/mol
+\subitem DASH Temperature: 300.54083 $\pm$ 0.19621  K
+\subitem OpenMM Temperature:  300.42003 $\pm$ 0.19215 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-0charge}
+\end{figure} 
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{block_averaging_0charge}
+\end{figure} 
+
+\item Using steps 6000 thru 10000 from SE analysis, chose 4 blocks of size 1000 ps 
+\subitem DASH Potential Energy: 3878.93275 $\pm$ 18.3898 kJ/mol
+\subitem OpenMM Potential Energy: 3930.67033 $\pm$ 6.60727 kJ/mol
+\subitem DASH Temperature: 300.4556 $\pm$ 0.37655  K
+\subitem OpenMM Temperature:  300.36912 $\pm$ 0.190716 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-0charge-narrow}
+\end{figure} 
+
+\item For time step 0.5 fs, rCut 9 A, nBeads 1, NVT, 0 charge (simulations 56 and 57):
+Using steps 0 thru 10000 from SE analysis, chose 10 blocks of size 1000 ps 
+\subitem DASH Potential Energy: 1787.64728 $\pm$ 3.91321 kJ/mol
+\subitem OpenMM Potential Energy: 1124.83421 $\pm$ 5.52062 kJ/mol
+\subitem DASH Temperature: 300.41357 $\pm$ 0.20056  K
+\subitem OpenMM Temperature:  300.54907 $\pm$ 0.20918 K
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{MC-MM-0charge-NVT}
+\end{figure} 
 \end{enumerate}
 
 

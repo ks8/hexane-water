@@ -119,9 +119,9 @@ def process_datafile(files, options):
 		OpenMM_averages[i] = np.mean(OpenMM_data[i*int(num_samples/num_SE_blocks):(i+1)*int(num_samples/num_SE_blocks), analysis_col])
 
 	print('DASH_mean: '+str(np.mean(DASH_averages)))
-	print('DASH_SE: '+str(stats.sem(DASH_averages)))
+	print('DASH_SE (2*): '+str(2.0*stats.sem(DASH_averages)))
 	print('OpenMM_mean: '+str(np.mean(OpenMM_averages)))
-	print('OpenMM_SE: '+str(stats.sem(OpenMM_averages)))
+	print('OpenMM_SE (2*): '+str(2.0*stats.sem(OpenMM_averages)))
 
 
 # Main function
